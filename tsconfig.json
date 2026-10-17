@@ -11,10 +11,26 @@
     "noUnusedParameters": false
   },
   "include": [
-    "**/*.ts",
-    "**/*.tsx",
+    "app/**/*.ts",
+    "app/**/*.tsx",
+    "components/**/*.ts",
+    "components/**/*.tsx",
+    "constants/**/*.ts",
+    "constants/**/*.tsx",
+    "services/**/*.ts",
+    "services/**/*.tsx",
+    "store/**/*.ts",
+    "store/**/*.tsx",
+    "types/**/*.ts",
+    "types/**/*.tsx",
+    "utils/**/*.ts",
+    "utils/**/*.tsx",
     ".expo/types/**/*.d.ts",
     "expo-env.d.ts",
     ".expo/types/**/*.ts"
+  ],
+  "exclude": [
+    "node_modules",
+    "src"
   ]
 }
