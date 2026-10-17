@@ -1,0 +1,18 @@
+/**
+ * Zeona — Auth Stack Layout
+ * Manages transitions between Login, Register, Forgot Password, and Reset Password.
+ */
+
+import React from 'react';
+import { Stack } from 'expo-router';
+
+export default function AuthLayout() {
+  return (
+    <Stack screenOptions={{ headerShown: false, animation: 'fade' }}>
+      <Stack.Screen name="login" />
+      <Stack.Screen name="register" />
+      <Stack.Screen name="forgot-password" />
+      <Stack.Screen name="reset-password" />
+    </Stack>
+  );
+}

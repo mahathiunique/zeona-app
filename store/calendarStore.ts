@@ -1,0 +1,459 @@
+/**
+ * Zeona — Calendar, Tasks & Habits Store (Zustand + Supabase + AsyncStorage)
+ * Manages daily tasks, habit streaks, and important calendar dates/events.
+ * Persists to Supabase table 'calendar_events' when authenticated,
+ * with resilient offline fallback to AsyncStorage.
+ */
+
+import { create } from 'zustand';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { supabase } from '@/services/supabase';
+import { useAuthStore } from '@/store/authStore';
+import type { Task, Habit, CalendarEvent, CalendarEventType } from '@/types';
+
+const TASKS_STORAGE_KEY = 'zeona_tasks_v1';
+const HABITS_STORAGE_KEY = 'zeona_habits_v1';
+const GUEST_EVENTS_STORAGE_KEY = 'zeona_guest_events_v1';
+
+export const EVENT_CATEGORY_CONFIG: Record<
+  CalendarEventType,
+  { label: string; icon: string; color: string; bg: string; borderColor: string }
+> = {
+  birthday: {
+    label: 'Birthday',
+    icon: 'gift-outline',
+    color: '#e11d48',
+    bg: '#fff1f2',
+    borderColor: '#fecdd3',
+  },
+  anniversary: {
+    label: 'Anniversary',
+    icon: 'heart-outline',
+    color: '#c026d3',
+    bg: '#fdf4ff',
+    borderColor: '#f5d0fe',
+  },
+  exam: {
+    label: 'Exam & Test',
+    icon: 'school-outline',
+    color: '#d97706',
+    bg: '#fffbeb',
+    borderColor: '#fde68a',
+  },
+  milestone: {
+    label: 'Personal Milestone',
+    icon: 'trophy-outline',
+    color: '#059669',
+    bg: '#ecfdf5',
+    borderColor: '#a7f3d0',
+  },
+  reminder: {
+    label: 'Gentle Reminder',
+    icon: 'alarm-outline',
+    color: '#7c3aed',
+    bg: '#faf5ff',
+    borderColor: '#ede9fe',
+  },
+  event: {
+    label: 'Event & Outing',
+    icon: 'calendar-outline',
+    color: '#0284c7',
+    bg: '#f0f9ff',
+    borderColor: '#bae6fd',
+  },
+};
+
+const SEED_TASKS: Task[] = [
+  {
+    id: 'task-1',
+    user_id: 'local-user',
+    title: 'Morning lavender tea & mindful breathing',
+    description: '10 minutes of screen-free stillness',
+    is_completed: true,
+    priority: 'low',
+    due_date: new Date().toISOString().split('T')[0],
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+  },
+  {
+    id: 'task-2',
+    user_id: 'local-user',
+    title: 'Write 3 things I am grateful for',
+    description: 'Capture in Zeona daily journal',
+    is_completed: false,
+    priority: 'medium',
+    due_date: new Date().toISOString().split('T')[0],
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+  },
+  {
+    id: 'task-3',
+    user_id: 'local-user',
+    title: 'Evening walk & stretch under open skies',
+    description: 'Unwind and leave work behind',
+    is_completed: false,
+    priority: 'low',
+    due_date: new Date().toISOString().split('T')[0],
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+  },
+];
+
+const SEED_HABITS: Habit[] = [
+  {
+    id: 'habit-1',
+    user_id: 'local-user',
+    title: 'Drink 2L water',
+    description: 'Keep skin glowing and energy high',
+    frequency: 'daily',
+    color: '#38bdf8',
+    icon: 'water-outline',
+    streak_count: 7,
+    created_at: new Date().toISOString(),
+  },
+  {
+    id: 'habit-2',
+    user_id: 'local-user',
+    title: 'Daily Journaling',
+    description: 'Reflect before sleeping',
+    frequency: 'daily',
+    color: '#8b5cf6',
+    icon: 'book-outline',
+    streak_count: 12,
+    created_at: new Date().toISOString(),
+  },
+  {
+    id: 'habit-3',
+    user_id: 'local-user',
+    title: 'Gentle Movement',
+    description: 'Yoga or evening walk',
+    frequency: 'daily',
+    color: '#4ade80',
+    icon: 'fitness-outline',
+    streak_count: 5,
+    created_at: new Date().toISOString(),
+  },
+];
+
+const SEED_EVENTS: CalendarEvent[] = [
+  {
+    id: 'evt-1',
+    user_id: 'local-user',
+    title: 'Self-Care Sunday Spa 🌸',
+    description: 'Face masks, reading, and botanical bath',
+    event_date: new Date(Date.now() + 86400000 * 1).toISOString().split('T')[0],
+    event_time: '11:00 AM',
+    event_type: 'milestone',
+    has_reminder: true,
+    reminder_time: '1_hour_before',
+    is_recurring: true,
+    recurrence_rule: 'weekly',
+    color: '#059669',
+    created_at: new Date().toISOString(),
+  },
+  {
+    id: 'evt-2',
+    user_id: 'local-user',
+    title: 'Aria’s Birthday Celebration 🎂',
+    description: 'Send botanical card and love',
+    event_date: new Date(Date.now() + 86400000 * 3).toISOString().split('T')[0],
+    event_time: '06:30 PM',
+    event_type: 'birthday',
+    has_reminder: true,
+    reminder_time: '1_day_before',
+    is_recurring: false,
+    recurrence_rule: null,
+    color: '#e11d48',
+    created_at: new Date().toISOString(),
+  },
+  {
+    id: 'evt-3',
+    user_id: 'local-user',
+    title: 'Semester Final Exam 📝',
+    description: 'Review chapters 4-8 beforehand',
+    event_date: new Date(Date.now() + 86400000 * 7).toISOString().split('T')[0],
+    event_time: '09:00 AM',
+    event_type: 'exam',
+    has_reminder: true,
+    reminder_time: '1_day_before',
+    is_recurring: false,
+    recurrence_rule: null,
+    color: '#d97706',
+    created_at: new Date().toISOString(),
+  },
+];
+
+interface CalendarState {
+  tasks: Task[];
+  habits: Habit[];
+  events: CalendarEvent[];
+  selectedDate: string; // YYYY-MM-DD
+  activeHabitLog: Record<string, boolean>; // habitId_YYYY-MM-DD -> completed
+  isLoading: boolean;
+  error: string | null;
+
+  // Actions
+  initialize: () => Promise<void>;
+  fetchEvents: () => Promise<void>;
+  toggleTask: (id: string) => void;
+  addTask: (title: string, priority?: Task['priority']) => void;
+  deleteTask: (id: string) => void;
+  toggleHabitToday: (habitId: string) => void;
+  addHabit: (title: string, description?: string, color?: string, icon?: string) => void;
+  addEvent: (eventData: Partial<CalendarEvent>) => Promise<CalendarEvent | null>;
+  updateEvent: (id: string, updates: Partial<CalendarEvent>) => Promise<CalendarEvent | null>;
+  deleteEvent: (id: string) => Promise<void>;
+  setSelectedDate: (date: string) => void;
+  clearError: () => void;
+}
+
+export const useCalendarStore = create<CalendarState>((set, get) => ({
+  tasks: SEED_TASKS,
+  habits: SEED_HABITS,
+  events: SEED_EVENTS,
+  selectedDate: new Date().toISOString().split('T')[0],
+  activeHabitLog: {
+    [`habit-1_${new Date().toISOString().split('T')[0]}`]: true,
+    [`habit-2_${new Date().toISOString().split('T')[0]}`]: true,
+  },
+  isLoading: false,
+  error: null,
+
+  initialize: async () => {
+    // 1. Restore local tasks and habits
+    try {
+      const savedTasks = await AsyncStorage.getItem(TASKS_STORAGE_KEY);
+      if (savedTasks) {
+        set({ tasks: JSON.parse(savedTasks) });
+      }
+      const savedHabits = await AsyncStorage.getItem(HABITS_STORAGE_KEY);
+      if (savedHabits) {
+        set({ habits: JSON.parse(savedHabits) });
+      }
+    } catch {
+      // Fallback to default
+    }
+
+    // 2. Fetch events
+    await get().fetchEvents();
+  },
+
+  fetchEvents: async () => {
+    set({ isLoading: true, error: null });
+    const user = useAuthStore.getState().user;
+    const storageKey = user ? `zeona_events_${user.id}` : GUEST_EVENTS_STORAGE_KEY;
+
+    // A. If Supabase configured & user is authenticated, query Supabase
+    if (supabase && user) {
+      try {
+        const { data, error } = await supabase
+          .from('calendar_events')
+          .select('*')
+          .eq('user_id', user.id)
+          .order('event_date', { ascending: true });
+
+        if (error) {
+          console.warn('[Zeona Calendar] Supabase query notice:', error.message);
+          const localJson = await AsyncStorage.getItem(storageKey);
+          const localEvents: CalendarEvent[] = localJson ? JSON.parse(localJson) : SEED_EVENTS;
+          set({ events: localEvents, isLoading: false });
+          return;
+        }
+
+        const eventsList = (data && data.length > 0) ? data : SEED_EVENTS;
+        set({ events: eventsList, isLoading: false });
+        AsyncStorage.setItem(storageKey, JSON.stringify(eventsList)).catch(() => {});
+        return;
+      } catch (err) {
+        console.warn('[Zeona Calendar] fetch error:', err);
+      }
+    }
+
+    // B. Local fallback
+    try {
+      const localJson = await AsyncStorage.getItem(storageKey);
+      const localEvents: CalendarEvent[] = localJson ? JSON.parse(localJson) : SEED_EVENTS;
+      set({ events: localEvents, isLoading: false });
+    } catch (err) {
+      set({ events: SEED_EVENTS, isLoading: false });
+    }
+  },
+
+  toggleTask: (id: string) => {
+    const nextTasks = get().tasks.map((t) =>
+      t.id === id ? { ...t, is_completed: !t.is_completed } : t
+    );
+    set({ tasks: nextTasks });
+    AsyncStorage.setItem(TASKS_STORAGE_KEY, JSON.stringify(nextTasks)).catch(() => {});
+  },
+
+  addTask: (title: string, priority: Task['priority'] = 'medium') => {
+    if (!title.trim()) return;
+    const newTask: Task = {
+      id: `task-${Date.now()}`,
+      user_id: 'local-user',
+      title: title.trim(),
+      description: null,
+      is_completed: false,
+      priority,
+      due_date: get().selectedDate,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    };
+    const nextTasks = [newTask, ...get().tasks];
+    set({ tasks: nextTasks });
+    AsyncStorage.setItem(TASKS_STORAGE_KEY, JSON.stringify(nextTasks)).catch(() => {});
+  },
+
+  deleteTask: (id: string) => {
+    const nextTasks = get().tasks.filter((t) => t.id !== id);
+    set({ tasks: nextTasks });
+    AsyncStorage.setItem(TASKS_STORAGE_KEY, JSON.stringify(nextTasks)).catch(() => {});
+  },
+
+  toggleHabitToday: (habitId: string) => {
+    const dateKey = `${habitId}_${get().selectedDate}`;
+    const wasDone = Boolean(get().activeHabitLog[dateKey]);
+    const nextLog = { ...get().activeHabitLog, [dateKey]: !wasDone };
+
+    const nextHabits = get().habits.map((h) => {
+      if (h.id === habitId) {
+        const delta = wasDone ? -1 : 1;
+        return { ...h, streak_count: Math.max(0, h.streak_count + delta) };
+      }
+      return h;
+    });
+
+    set({ activeHabitLog: nextLog, habits: nextHabits });
+    AsyncStorage.setItem(HABITS_STORAGE_KEY, JSON.stringify(nextHabits)).catch(() => {});
+  },
+
+  addHabit: (title: string, description = '', color = '#8b5cf6', icon = 'sparkles-outline') => {
+    if (!title.trim()) return;
+    const newHabit: Habit = {
+      id: `habit-${Date.now()}`,
+      user_id: 'local-user',
+      title: title.trim(),
+      description: description || null,
+      frequency: 'daily',
+      color,
+      icon,
+      streak_count: 0,
+      created_at: new Date().toISOString(),
+    };
+    const nextHabits = [...get().habits, newHabit];
+    set({ habits: nextHabits });
+    AsyncStorage.setItem(HABITS_STORAGE_KEY, JSON.stringify(nextHabits)).catch(() => {});
+  },
+
+  addEvent: async (eventData: Partial<CalendarEvent>) => {
+    if (!eventData.title?.trim()) return null;
+
+    const user = useAuthStore.getState().user;
+    const userId = user ? user.id : 'guest-user';
+    const storageKey = user ? `zeona_events_${user.id}` : GUEST_EVENTS_STORAGE_KEY;
+
+    const type = eventData.event_type || 'event';
+    const config = EVENT_CATEGORY_CONFIG[type];
+
+    const newEvent: CalendarEvent = {
+      id: `evt-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
+      user_id: userId,
+      title: eventData.title.trim(),
+      description: eventData.description?.trim() || null,
+      event_date: eventData.event_date || get().selectedDate,
+      event_time: eventData.event_time?.trim() || null,
+      event_type: type,
+      has_reminder: Boolean(eventData.has_reminder),
+      reminder_time: eventData.has_reminder ? (eventData.reminder_time || '15_min_before') : null,
+      is_recurring: Boolean(eventData.is_recurring),
+      recurrence_rule: eventData.recurrence_rule || null,
+      color: eventData.color || config.color,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    };
+
+    // 1. Sync to Supabase if authenticated
+    if (supabase && user) {
+      try {
+        const { error } = await supabase.from('calendar_events').insert([newEvent]);
+        if (error) {
+          console.warn('[Zeona Calendar] Supabase insert notice:', error.message);
+        }
+      } catch (err) {
+        console.warn('[Zeona Calendar] Supabase insert error:', err);
+      }
+    }
+
+    // 2. Update local state
+    const nextEvents = [newEvent, ...get().events];
+    set({ events: nextEvents });
+    AsyncStorage.setItem(storageKey, JSON.stringify(nextEvents)).catch(() => {});
+
+    return newEvent;
+  },
+
+  updateEvent: async (id: string, updates: Partial<CalendarEvent>) => {
+    const user = useAuthStore.getState().user;
+    const storageKey = user ? `zeona_events_${user.id}` : GUEST_EVENTS_STORAGE_KEY;
+
+    const updatedEvents = get().events.map((evt) => {
+      if (evt.id === id) {
+        const nextType = updates.event_type || evt.event_type;
+        const config = EVENT_CATEGORY_CONFIG[nextType];
+        return {
+          ...evt,
+          ...updates,
+          color: updates.color || config.color,
+          updated_at: new Date().toISOString(),
+        };
+      }
+      return evt;
+    });
+
+    const updated = updatedEvents.find((e) => e.id === id) || null;
+    set({ events: updatedEvents });
+
+    // Sync to Supabase
+    if (supabase && user && updated) {
+      try {
+        await supabase
+          .from('calendar_events')
+          .update(updates)
+          .eq('id', id)
+          .eq('user_id', user.id);
+      } catch (err) {
+        console.warn('[Zeona Calendar] Supabase update error:', err);
+      }
+    }
+
+    AsyncStorage.setItem(storageKey, JSON.stringify(updatedEvents)).catch(() => {});
+    return updated;
+  },
+
+  deleteEvent: async (id: string) => {
+    const user = useAuthStore.getState().user;
+    const storageKey = user ? `zeona_events_${user.id}` : GUEST_EVENTS_STORAGE_KEY;
+
+    const updatedEvents = get().events.filter((evt) => evt.id !== id);
+    set({ events: updatedEvents });
+
+    // Sync to Supabase
+    if (supabase && user) {
+      try {
+        await supabase
+          .from('calendar_events')
+          .delete()
+          .eq('id', id)
+          .eq('user_id', user.id);
+      } catch (err) {
+        console.warn('[Zeona Calendar] Supabase delete error:', err);
+      }
+    }
+
+    AsyncStorage.setItem(storageKey, JSON.stringify(updatedEvents)).catch(() => {});
+  },
+
+  setSelectedDate: (selectedDate: string) => set({ selectedDate }),
+  clearError: () => set({ error: null }),
+}));
