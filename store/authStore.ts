@@ -31,6 +31,7 @@ interface AuthState {
   resetPasswordForEmail: (email: string) => Promise<{ success: boolean; error?: string }>;
   updatePassword: (password: string) => Promise<{ success: boolean; error?: string }>;
   continueAsGuest: () => void;
+  updateProfile: (data: { displayName?: string; avatarUrl?: string; bio?: string }) => Promise<{ success: boolean; error?: string }>;
   signOut: () => Promise<void>;
   clearError: () => void;
   setPasswordRecovery: (active: boolean) => void;
@@ -58,15 +59,39 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     Promise.all([
       supabase.auth.getSession(),
       AsyncStorage.getItem(GUEST_STORAGE_KEY),
+      AsyncStorage.getItem('zeona_profile_meta_v1'),
     ])
-      .then(([{ data: { session }, error }, guestVal]) => {
+      .then(([{ data: { session }, error }, guestVal, localProfileJson]) => {
         if (error) {
           console.warn('[Zeona Auth] Error retrieving session:', error.message);
         }
         const isGuest = Boolean(guestVal === 'true');
+        let initialUser = session?.user ?? null;
+
+        if (localProfileJson) {
+          try {
+            const localMeta = JSON.parse(localProfileJson);
+            if (initialUser) {
+              initialUser = {
+                ...initialUser,
+                user_metadata: {
+                  ...localMeta,
+                  ...initialUser.user_metadata,
+                },
+              };
+            } else if (isGuest) {
+              initialUser = {
+                id: 'guest-user',
+                email: 'guest@zeona.app',
+                user_metadata: localMeta,
+              } as any;
+            }
+          } catch {}
+        }
+
         set({
           session,
-          user: session?.user ?? null,
+          user: initialUser,
           isGuest,
           isLoading: false,
           isInitialized: true,
@@ -247,6 +272,55 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   continueAsGuest: () => {
     set({ isGuest: true, error: null });
     AsyncStorage.setItem(GUEST_STORAGE_KEY, 'true').catch(() => {});
+  },
+
+  updateProfile: async (data: { displayName?: string; avatarUrl?: string; bio?: string }) => {
+    set({ isLoading: true, error: null });
+    const currentUser = get().user;
+    const nextMetadata = {
+      ...(currentUser?.user_metadata || {}),
+      ...(data.displayName !== undefined ? { display_name: data.displayName.trim(), full_name: data.displayName.trim() } : {}),
+      ...(data.avatarUrl !== undefined ? { avatar_url: data.avatarUrl } : {}),
+      ...(data.bio !== undefined ? { bio: data.bio.trim() } : {}),
+    };
+
+    // Save to local storage for persistence across reloads
+    AsyncStorage.setItem('zeona_profile_meta_v1', JSON.stringify(nextMetadata)).catch(() => {});
+
+    if (supabase && currentUser && !get().isGuest) {
+      try {
+        const { data: updatedData, error } = await supabase.auth.updateUser({
+          data: nextMetadata,
+        });
+
+        if (!error && updatedData.user) {
+          set({ user: updatedData.user, isLoading: false, error: null });
+          return { success: true };
+        } else if (error) {
+          console.warn('[Zeona Auth] updateUser notice:', error.message);
+        }
+      } catch (err: any) {
+        console.warn('[Zeona Auth] updateUser error:', err);
+      }
+    }
+
+    // Local / guest user state update
+    if (currentUser) {
+      const updatedUser = {
+        ...currentUser,
+        user_metadata: nextMetadata,
+      };
+      set({ user: updatedUser as User, isLoading: false, error: null });
+    } else {
+      const simulatedUser: any = {
+        id: 'guest-user',
+        email: 'guest@zeona.app',
+        user_metadata: nextMetadata,
+      };
+      set({ user: simulatedUser, isLoading: false, error: null });
+    }
+
+    return { success: true };
   },
 
   signOut: async () => {
