@@ -465,11 +465,11 @@ export default function ProfileScreen() {
 
             {/* 5. Reminders */}
             <ProfileLink
-              icon="calendar-outline"
-              label="Reminders & Calendar"
-              subtitle="Scheduled events, milestones & notifications"
+              icon="notifications-outline"
+              label="Reminders"
+              subtitle="Mindful cues & scheduled sanctuary alerts"
               color={colors.accent}
-              onPress={() => router.push('/(tabs)/calendar')}
+              onPress={() => router.push('/reminders')}
             />
           </ZCard>
 

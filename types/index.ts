@@ -181,6 +181,31 @@ export interface Memory {
 export type MemoryFilter = 'all' | 'favorites' | 'month' | 'year';
 export type MemoryLayout = 'grid' | 'card';
 
+// ─── Reminders ────────────────────────────────────────────────────────────────
+
+export type ReminderRelatedType = 'task' | 'event' | 'habit' | 'none';
+
+export interface Reminder {
+  id: string;
+  user_id: string;
+  title: string;
+  notes?: string | null;
+  reminder_date: string; // YYYY-MM-DD
+  reminder_time: string; // e.g. "09:00"
+  is_enabled: boolean;
+  is_completed: boolean;
+  completed_at?: string | null;
+  related_type?: ReminderRelatedType;
+  related_id?: string | null;
+  related_title?: string | null;
+  notification_id?: string | null;
+  is_scheduled_on_device: boolean;
+  created_at: string;
+  updated_at?: string;
+}
+
+export type ReminderFilter = 'upcoming' | 'completed' | 'all';
+
 // ─── UI helpers ───────────────────────────────────────────────────────────────
 
 export type LoadingState = 'idle' | 'loading' | 'success' | 'error';
