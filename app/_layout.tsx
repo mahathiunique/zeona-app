@@ -68,8 +68,10 @@ export default function RootLayout() {
       return;
     }
 
+    const segs = segments as string[];
+
     // 2. Password recovery mode directs to reset password screen
-    if (isPasswordRecovery && segments[1] !== 'reset-password') {
+    if (isPasswordRecovery && segs[1] !== 'reset-password') {
       router.replace('/(auth)/reset-password');
       return;
     }
@@ -77,12 +79,12 @@ export default function RootLayout() {
     // 3. Unauthenticated users (no session and not guest) cannot access protected tabs
     const isAuthed = Boolean(session || isGuest);
     if (!isAuthed) {
-      if (segments[0] === '(tabs)' || !segments[0] || segments[0] === 'journal') {
+      if (segs[0] === '(tabs)' || !segs[0] || segs[0] === 'journal' || segs[0] === 'tasks') {
         router.replace('/(auth)/login');
       }
     } else if (session) {
       // 4. Authenticated users on login/register should go to tabs
-      if (segments[0] === '(auth)' && segments[1] !== 'reset-password') {
+      if (segs[0] === '(auth)' && segs[1] !== 'reset-password') {
         router.replace('/(tabs)');
       }
     }
@@ -116,6 +118,7 @@ export default function RootLayout() {
           <Stack.Screen name="journal/[id]" options={{ headerShown: false }} />
           <Stack.Screen name="journal/editor" options={{ headerShown: false }} />
           <Stack.Screen name="journal/voice" options={{ headerShown: false }} />
+          <Stack.Screen name="tasks/index" options={{ headerShown: false }} />
           <Stack.Screen name="+not-found" />
         </Stack>
       </SafeAreaProvider>

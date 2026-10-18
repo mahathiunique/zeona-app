@@ -384,7 +384,7 @@ export default function HomeScreen() {
             <Pressable
               onPress={() => {
                 triggerHaptic();
-                router.push('/(tabs)/calendar');
+                router.push('/tasks');
               }}
               style={({ pressed }) => [
                 styles.quickAccessCard,
@@ -504,12 +504,12 @@ export default function HomeScreen() {
             <Pressable
               onPress={() => {
                 triggerHaptic();
-                router.push('/(tabs)/calendar');
+                router.push('/tasks');
               }}
               style={styles.cardFooterLink}
             >
               <ZText variant="caption" color={colors.primary} style={{ fontWeight: '600' }}>
-                View all tasks in Calendar →
+                View and manage all tasks →
               </ZText>
             </Pressable>
           </ZCard>

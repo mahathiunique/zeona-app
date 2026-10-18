@@ -46,6 +46,7 @@ export interface JournalEntry {
 // ─── Tasks ────────────────────────────────────────────────────────────────────
 
 export type TaskPriority = 'low' | 'medium' | 'high';
+export type TaskCategory = 'personal' | 'wellness' | 'work' | 'home' | 'growth';
 
 export interface Task {
   id: string;
@@ -54,9 +55,12 @@ export interface Task {
   description: string | null;
   is_completed: boolean;
   priority: TaskPriority;
-  due_date: string | null;
+  category?: TaskCategory | string | null;
+  due_date: string | null; // ISO YYYY-MM-DD
+  due_time?: string | null; // e.g. "09:30 AM"
+  completed_at?: string | null;
   created_at: string;
-  updated_at: string;
+  updated_at?: string;
 }
 
 // ─── Habits ───────────────────────────────────────────────────────────────────

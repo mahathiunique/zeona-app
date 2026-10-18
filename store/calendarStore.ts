@@ -9,11 +9,61 @@ import { create } from 'zustand';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { supabase } from '@/services/supabase';
 import { useAuthStore } from '@/store/authStore';
-import type { Task, Habit, CalendarEvent, CalendarEventType } from '@/types';
+import type { Task, TaskPriority, TaskCategory, Habit, CalendarEvent, CalendarEventType } from '@/types';
 
 const TASKS_STORAGE_KEY = 'zeona_tasks_v1';
 const HABITS_STORAGE_KEY = 'zeona_habits_v1';
 const GUEST_EVENTS_STORAGE_KEY = 'zeona_guest_events_v1';
+
+export const TASK_CATEGORY_CONFIG: Record<
+  TaskCategory,
+  { label: string; icon: string; color: string; bg: string; borderColor: string }
+> = {
+  wellness: {
+    label: 'Wellness',
+    icon: 'leaf-outline',
+    color: '#059669',
+    bg: '#ecfdf5',
+    borderColor: '#a7f3d0',
+  },
+  personal: {
+    label: 'Personal',
+    icon: 'sparkles-outline',
+    color: '#7c3aed',
+    bg: '#faf5ff',
+    borderColor: '#ede9fe',
+  },
+  work: {
+    label: 'Work & Study',
+    icon: 'briefcase-outline',
+    color: '#0284c7',
+    bg: '#f0f9ff',
+    borderColor: '#bae6fd',
+  },
+  home: {
+    label: 'Home & Life',
+    icon: 'home-outline',
+    color: '#d97706',
+    bg: '#fffbeb',
+    borderColor: '#fde68a',
+  },
+  growth: {
+    label: 'Mind & Growth',
+    icon: 'book-outline',
+    color: '#e11d48',
+    bg: '#fff1f2',
+    borderColor: '#fecdd3',
+  },
+};
+
+export const TASK_PRIORITY_CONFIG: Record<
+  TaskPriority,
+  { label: string; icon: string; color: string; bg: string }
+> = {
+  high: { label: 'High Priority', icon: 'flame-outline', color: '#e11d48', bg: '#fff1f2' },
+  medium: { label: 'Medium', icon: 'remove-outline', color: '#d97706', bg: '#fffbeb' },
+  low: { label: 'Low', icon: 'leaf-outline', color: '#059669', bg: '#f0fdf4' },
+};
 
 export const EVENT_CATEGORY_CONFIG: Record<
   CalendarEventType,
@@ -71,8 +121,11 @@ const SEED_TASKS: Task[] = [
     description: '10 minutes of screen-free stillness',
     is_completed: true,
     priority: 'low',
+    category: 'wellness',
     due_date: new Date().toISOString().split('T')[0],
-    created_at: new Date().toISOString(),
+    due_time: '08:00 AM',
+    completed_at: new Date().toISOString(),
+    created_at: new Date(Date.now() - 3600000 * 4).toISOString(),
     updated_at: new Date().toISOString(),
   },
   {
@@ -82,8 +135,10 @@ const SEED_TASKS: Task[] = [
     description: 'Capture in Zeona daily journal',
     is_completed: false,
     priority: 'medium',
+    category: 'growth',
     due_date: new Date().toISOString().split('T')[0],
-    created_at: new Date().toISOString(),
+    due_time: '09:30 AM',
+    created_at: new Date(Date.now() - 3600000 * 2).toISOString(),
     updated_at: new Date().toISOString(),
   },
   {
@@ -93,7 +148,35 @@ const SEED_TASKS: Task[] = [
     description: 'Unwind and leave work behind',
     is_completed: false,
     priority: 'low',
+    category: 'wellness',
     due_date: new Date().toISOString().split('T')[0],
+    due_time: '06:00 PM',
+    created_at: new Date(Date.now() - 3600000).toISOString(),
+    updated_at: new Date().toISOString(),
+  },
+  {
+    id: 'task-4',
+    user_id: 'local-user',
+    title: 'Review exam study notes for chapters 4 to 8',
+    description: 'Prepare flashcards and review formula summary',
+    is_completed: false,
+    priority: 'high',
+    category: 'work',
+    due_date: new Date(Date.now() + 86400000).toISOString().split('T')[0],
+    due_time: '02:00 PM',
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+  },
+  {
+    id: 'task-5',
+    user_id: 'local-user',
+    title: 'Water indoor plants & fresh flowers',
+    description: 'Orchids and lavender pots near sunlight window',
+    is_completed: false,
+    priority: 'low',
+    category: 'home',
+    due_date: new Date(Date.now() + 86400000 * 2).toISOString().split('T')[0],
+    due_time: '10:00 AM',
     created_at: new Date().toISOString(),
     updated_at: new Date().toISOString(),
   },
@@ -195,9 +278,12 @@ interface CalendarState {
   // Actions
   initialize: () => Promise<void>;
   fetchEvents: () => Promise<void>;
-  toggleTask: (id: string) => void;
-  addTask: (title: string, priority?: Task['priority']) => void;
-  deleteTask: (id: string) => void;
+  fetchTasks: () => Promise<void>;
+  createTask: (taskData: Partial<Task>) => Promise<Task | null>;
+  updateTask: (id: string, updates: Partial<Task>) => Promise<Task | null>;
+  toggleTask: (id: string) => Promise<void>;
+  addTask: (title: string, priority?: TaskPriority) => void;
+  deleteTask: (id: string) => Promise<void>;
   toggleHabitToday: (habitId: string) => void;
   addHabit: (title: string, description?: string, color?: string, icon?: string) => void;
   addEvent: (eventData: Partial<CalendarEvent>) => Promise<CalendarEvent | null>;
@@ -220,22 +306,18 @@ export const useCalendarStore = create<CalendarState>((set, get) => ({
   error: null,
 
   initialize: async () => {
-    // 1. Restore local tasks and habits
+    // 1. Restore local habits
     try {
-      const savedTasks = await AsyncStorage.getItem(TASKS_STORAGE_KEY);
-      if (savedTasks) {
-        set({ tasks: JSON.parse(savedTasks) });
-      }
       const savedHabits = await AsyncStorage.getItem(HABITS_STORAGE_KEY);
       if (savedHabits) {
         set({ habits: JSON.parse(savedHabits) });
       }
     } catch {
-      // Fallback to default
+      // Fallback
     }
 
-    // 2. Fetch events
-    await get().fetchEvents();
+    // 2. Fetch tasks and events concurrently
+    await Promise.all([get().fetchTasks(), get().fetchEvents()]);
   },
 
   fetchEvents: async () => {
@@ -243,7 +325,6 @@ export const useCalendarStore = create<CalendarState>((set, get) => ({
     const user = useAuthStore.getState().user;
     const storageKey = user ? `zeona_events_${user.id}` : GUEST_EVENTS_STORAGE_KEY;
 
-    // A. If Supabase configured & user is authenticated, query Supabase
     if (supabase && user) {
       try {
         const { data, error } = await supabase
@@ -252,63 +333,188 @@ export const useCalendarStore = create<CalendarState>((set, get) => ({
           .eq('user_id', user.id)
           .order('event_date', { ascending: true });
 
-        if (error) {
-          console.warn('[Zeona Calendar] Supabase query notice:', error.message);
-          const localJson = await AsyncStorage.getItem(storageKey);
-          const localEvents: CalendarEvent[] = localJson ? JSON.parse(localJson) : SEED_EVENTS;
-          set({ events: localEvents, isLoading: false });
+        if (!error && data && data.length > 0) {
+          set({ events: data, isLoading: false });
+          AsyncStorage.setItem(storageKey, JSON.stringify(data)).catch(() => {});
           return;
         }
-
-        const eventsList = (data && data.length > 0) ? data : SEED_EVENTS;
-        set({ events: eventsList, isLoading: false });
-        AsyncStorage.setItem(storageKey, JSON.stringify(eventsList)).catch(() => {});
-        return;
       } catch (err) {
-        console.warn('[Zeona Calendar] fetch error:', err);
+        console.warn('[Zeona Calendar] Supabase query notice:', err);
       }
     }
 
-    // B. Local fallback
     try {
       const localJson = await AsyncStorage.getItem(storageKey);
       const localEvents: CalendarEvent[] = localJson ? JSON.parse(localJson) : SEED_EVENTS;
       set({ events: localEvents, isLoading: false });
-    } catch (err) {
+    } catch {
       set({ events: SEED_EVENTS, isLoading: false });
     }
   },
 
-  toggleTask: (id: string) => {
-    const nextTasks = get().tasks.map((t) =>
-      t.id === id ? { ...t, is_completed: !t.is_completed } : t
-    );
-    set({ tasks: nextTasks });
-    AsyncStorage.setItem(TASKS_STORAGE_KEY, JSON.stringify(nextTasks)).catch(() => {});
+  fetchTasks: async () => {
+    const user = useAuthStore.getState().user;
+    const storageKey = user ? `zeona_tasks_${user.id}` : TASKS_STORAGE_KEY;
+
+    if (supabase && user) {
+      try {
+        const { data, error } = await supabase
+          .from('tasks')
+          .select('*')
+          .eq('user_id', user.id)
+          .order('due_date', { ascending: true });
+
+        if (!error && data && data.length > 0) {
+          set({ tasks: data });
+          AsyncStorage.setItem(storageKey, JSON.stringify(data)).catch(() => {});
+          return;
+        }
+      } catch (err) {
+        console.warn('[Zeona Tasks] Supabase query notice:', err);
+      }
+    }
+
+    try {
+      const localJson = await AsyncStorage.getItem(storageKey);
+      if (localJson) {
+        set({ tasks: JSON.parse(localJson) });
+      } else {
+        set({ tasks: SEED_TASKS });
+        AsyncStorage.setItem(storageKey, JSON.stringify(SEED_TASKS)).catch(() => {});
+      }
+    } catch {
+      set({ tasks: SEED_TASKS });
+    }
   },
 
-  addTask: (title: string, priority: Task['priority'] = 'medium') => {
-    if (!title.trim()) return;
+  createTask: async (taskData: Partial<Task>) => {
+    const user = useAuthStore.getState().user;
+    const storageKey = user ? `zeona_tasks_${user.id}` : TASKS_STORAGE_KEY;
+
     const newTask: Task = {
-      id: `task-${Date.now()}`,
-      user_id: 'local-user',
-      title: title.trim(),
-      description: null,
+      id: `task-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
+      user_id: user?.id || 'local-user',
+      title: taskData.title?.trim() || 'Untitled task',
+      description: taskData.description?.trim() || null,
       is_completed: false,
-      priority,
-      due_date: get().selectedDate,
+      priority: taskData.priority || 'medium',
+      category: taskData.category || 'personal',
+      due_date: taskData.due_date || new Date().toISOString().split('T')[0],
+      due_time: taskData.due_time || null,
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
     };
+
     const nextTasks = [newTask, ...get().tasks];
     set({ tasks: nextTasks });
-    AsyncStorage.setItem(TASKS_STORAGE_KEY, JSON.stringify(nextTasks)).catch(() => {});
+    AsyncStorage.setItem(storageKey, JSON.stringify(nextTasks)).catch(() => {});
+
+    if (supabase && user) {
+      try {
+        await supabase.from('tasks').insert(newTask);
+      } catch (err) {
+        console.warn('[Zeona Tasks] Supabase insert notice:', err);
+      }
+    }
+
+    return newTask;
   },
 
-  deleteTask: (id: string) => {
+  updateTask: async (id: string, updates: Partial<Task>) => {
+    const user = useAuthStore.getState().user;
+    const storageKey = user ? `zeona_tasks_${user.id}` : TASKS_STORAGE_KEY;
+
+    let updatedTask: Task | null = null;
+    const nextTasks = get().tasks.map((t) => {
+      if (t.id === id) {
+        updatedTask = {
+          ...t,
+          ...updates,
+          updated_at: new Date().toISOString(),
+        };
+        return updatedTask;
+      }
+      return t;
+    });
+
+    if (updatedTask) {
+      set({ tasks: nextTasks });
+      AsyncStorage.setItem(storageKey, JSON.stringify(nextTasks)).catch(() => {});
+
+      if (supabase && user) {
+        try {
+          await supabase.from('tasks').update(updates).eq('id', id).eq('user_id', user.id);
+        } catch (err) {
+          console.warn('[Zeona Tasks] Supabase update notice:', err);
+        }
+      }
+    }
+
+    return updatedTask;
+  },
+
+  toggleTask: async (id: string) => {
+    const user = useAuthStore.getState().user;
+    const storageKey = user ? `zeona_tasks_${user.id}` : TASKS_STORAGE_KEY;
+
+    let updatedItem: Task | null = null;
+    const nextTasks = get().tasks.map((t) => {
+      if (t.id === id) {
+        const nextDone = !t.is_completed;
+        updatedItem = {
+          ...t,
+          is_completed: nextDone,
+          completed_at: nextDone ? new Date().toISOString() : null,
+          updated_at: new Date().toISOString(),
+        };
+        return updatedItem;
+      }
+      return t;
+    });
+
+    set({ tasks: nextTasks });
+    AsyncStorage.setItem(storageKey, JSON.stringify(nextTasks)).catch(() => {});
+
+    if (supabase && user && updatedItem) {
+      try {
+        await supabase
+          .from('tasks')
+          .update({
+            is_completed: (updatedItem as Task).is_completed,
+            completed_at: (updatedItem as Task).completed_at,
+          })
+          .eq('id', id)
+          .eq('user_id', user.id);
+      } catch (err) {
+        console.warn('[Zeona Tasks] Supabase toggle notice:', err);
+      }
+    }
+  },
+
+  deleteTask: async (id: string) => {
+    const user = useAuthStore.getState().user;
+    const storageKey = user ? `zeona_tasks_${user.id}` : TASKS_STORAGE_KEY;
+
     const nextTasks = get().tasks.filter((t) => t.id !== id);
     set({ tasks: nextTasks });
-    AsyncStorage.setItem(TASKS_STORAGE_KEY, JSON.stringify(nextTasks)).catch(() => {});
+    AsyncStorage.setItem(storageKey, JSON.stringify(nextTasks)).catch(() => {});
+
+    if (supabase && user) {
+      try {
+        await supabase.from('tasks').delete().eq('id', id).eq('user_id', user.id);
+      } catch (err) {
+        console.warn('[Zeona Tasks] Supabase delete notice:', err);
+      }
+    }
+  },
+
+  addTask: (title: string, priority: TaskPriority = 'medium') => {
+    get().createTask({
+      title,
+      priority,
+      due_date: get().selectedDate,
+      category: 'personal',
+    });
   },
 
   toggleHabitToday: (habitId: string) => {
