@@ -65,7 +65,7 @@ export interface Task {
 
 // ─── Habits ───────────────────────────────────────────────────────────────────
 
-export type HabitFrequency = 'daily' | 'weekly' | 'custom';
+export type HabitFrequency = 'daily' | 'weekdays' | 'weekends' | 'weekly' | 'custom';
 
 export interface Habit {
   id: string;
@@ -73,10 +73,15 @@ export interface Habit {
   title: string;
   description: string | null;
   frequency: HabitFrequency;
+  target_days?: number[]; // [0=Sun, 1=Mon, 2=Tue, 3=Wed, 4=Thu, 5=Fri, 6=Sat]
   color: string;
   icon: string;
-  streak_count: number;
+  streak_count?: number;
+  best_streak?: number;
+  is_archived?: boolean;
+  archived_at?: string | null;
   created_at: string;
+  updated_at?: string;
 }
 
 export interface HabitLog {

@@ -23,6 +23,7 @@ import { layout } from '@/constants/spacing';
 import { useCalendarStore } from '@/store/calendarStore';
 import { useJournalStore } from '@/store/journalStore';
 import { useAuthStore } from '@/store/authStore';
+import { useHabitStore } from '@/store/habitStore';
 import { triggerHaptic } from '@/utils/haptics';
 import type { MoodTag, Task, Habit, CalendarEvent, JournalEntry } from '@/types';
 
@@ -87,7 +88,11 @@ export default function HomeScreen() {
   const todayPriorities = tasks.slice(0, 3);
 
   // ── Habit & Streak calculations (strictly from actual records) ─────────────
-  const maxStreak = habits.length > 0 ? habits.reduce((acc, h) => Math.max(acc, h.streak_count), 0) : 0;
+  const habitStoreHabits = useHabitStore((s) => s.habits);
+  const habitStoreLogs = useHabitStore((s) => s.logs);
+  const maxStreak = useMemo(() => {
+    return useHabitStore.getState().getOverallStats().bestStreak;
+  }, [habitStoreHabits, habitStoreLogs]);
 
   // 7-day weekly strip data
   const weekDays = useMemo(() => {
@@ -516,11 +521,22 @@ export default function HomeScreen() {
 
           {/* ── 5. Habit Streak & Weekly Progress Card ──────────────────── */}
           <ZCard style={styles.habitStreakCard} elevation="sm" radius={radii['2xl']}>
-            <View style={styles.cardHeaderRow}>
+            <Pressable
+              onPress={() => {
+                triggerHaptic();
+                router.push('/habits');
+              }}
+              style={styles.cardHeaderRow}
+              accessibilityRole="button"
+              accessibilityLabel="Open Habit Tracker"
+            >
               <View style={{ flex: 1, gap: 2 }}>
-                <ZText variant="headingSmall" color={colors.textPrimary}>
-                  Habits & Rituals
-                </ZText>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                  <ZText variant="headingSmall" color={colors.textPrimary}>
+                    Habits & Rituals
+                  </ZText>
+                  <Ionicons name="chevron-forward" size={16} color={colors.textTertiary} />
+                </View>
                 <ZText variant="caption" color={colors.textSecondary}>
                   Calculated from your logged wellness habits
                 </ZText>
@@ -531,7 +547,7 @@ export default function HomeScreen() {
                   {maxStreak} {maxStreak === 1 ? 'day' : 'days'}
                 </ZText>
               </View>
-            </View>
+            </Pressable>
 
             {/* Weekly 7-Day Progress Strip */}
             <View style={styles.weeklyStrip}>
@@ -630,7 +646,7 @@ export default function HomeScreen() {
                   size="sm"
                   onPress={() => {
                     triggerHaptic();
-                    router.push('/(tabs)/calendar');
+                    router.push('/habits');
                   }}
                 />
               </View>

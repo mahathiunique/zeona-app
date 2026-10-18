@@ -3,7 +3,7 @@
  * User info, live stats from stores, responsive container, and sub-feature navigation.
  */
 
-import React from 'react';
+import React, { useMemo } from 'react';
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -17,6 +17,7 @@ import { isSupabaseConfigured } from '@/services/supabase';
 import { useJournalStore } from '@/store/journalStore';
 import { useCalendarStore } from '@/store/calendarStore';
 import { useAuthStore } from '@/store/authStore';
+import { useHabitStore } from '@/store/habitStore';
 import { triggerHaptic } from '@/utils/haptics';
 
 interface ProfileLinkProps {
@@ -55,8 +56,14 @@ export default function ProfileScreen() {
   const { entries } = useJournalStore();
   const { tasks, habits } = useCalendarStore();
   const { user, isGuest, signOut } = useAuthStore();
+  const habitStoreHabits = useHabitStore((s) => s.habits);
+  const habitStoreLogs = useHabitStore((s) => s.logs);
 
-  const maxStreak = habits.reduce((acc, h) => Math.max(acc, h.streak_count), 12);
+  const overallHabitStats = useMemo(() => {
+    return useHabitStore.getState().getOverallStats();
+  }, [habitStoreHabits, habitStoreLogs]);
+
+  const maxStreak = overallHabitStats.bestStreak;
   const tasksDone = tasks.filter((t) => t.is_completed).length;
 
   const displayName =
@@ -172,9 +179,9 @@ export default function ProfileScreen() {
             <ProfileLink
               icon="repeat-outline"
               label="Habit Streaks"
-              subtitle={`${habits.length} habits in progress`}
+              subtitle={`${overallHabitStats.activeHabitsCount} habits in progress`}
               color={colors.sage}
-              onPress={() => router.push('/(tabs)/calendar')}
+              onPress={() => router.push('/habits')}
             />
             <ZDivider marginV={spacing[1.5]} />
             <ProfileLink

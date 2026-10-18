@@ -9,6 +9,7 @@ import { create } from 'zustand';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { supabase } from '@/services/supabase';
 import { useAuthStore } from '@/store/authStore';
+import { useHabitStore } from '@/store/habitStore';
 import type { Task, TaskPriority, TaskCategory, Habit, CalendarEvent, CalendarEventType } from '@/types';
 
 const TASKS_STORAGE_KEY = 'zeona_tasks_v1';
@@ -306,12 +307,18 @@ export const useCalendarStore = create<CalendarState>((set, get) => ({
   error: null,
 
   initialize: async () => {
-    // 1. Restore local habits
+    // 1. Fetch habits via useHabitStore
     try {
-      const savedHabits = await AsyncStorage.getItem(HABITS_STORAGE_KEY);
-      if (savedHabits) {
-        set({ habits: JSON.parse(savedHabits) });
+      await useHabitStore.getState().fetchHabits();
+      const habitState = useHabitStore.getState();
+      const habitLogMap: Record<string, boolean> = {};
+      for (const log of habitState.logs) {
+        habitLogMap[`${log.habit_id}_${log.logged_date}`] = true;
       }
+      set({
+        habits: habitState.habits,
+        activeHabitLog: habitLogMap,
+      });
     } catch {
       // Fallback
     }
@@ -517,39 +524,20 @@ export const useCalendarStore = create<CalendarState>((set, get) => ({
     });
   },
 
-  toggleHabitToday: (habitId: string) => {
+  toggleHabitToday: async (habitId: string) => {
+    const isNowDone = await useHabitStore.getState().toggleHabitDate(habitId, get().selectedDate);
     const dateKey = `${habitId}_${get().selectedDate}`;
-    const wasDone = Boolean(get().activeHabitLog[dateKey]);
-    const nextLog = { ...get().activeHabitLog, [dateKey]: !wasDone };
-
-    const nextHabits = get().habits.map((h) => {
-      if (h.id === habitId) {
-        const delta = wasDone ? -1 : 1;
-        return { ...h, streak_count: Math.max(0, h.streak_count + delta) };
-      }
-      return h;
+    const nextLog = { ...get().activeHabitLog, [dateKey]: isNowDone };
+    set({
+      activeHabitLog: nextLog,
+      habits: useHabitStore.getState().habits,
     });
-
-    set({ activeHabitLog: nextLog, habits: nextHabits });
-    AsyncStorage.setItem(HABITS_STORAGE_KEY, JSON.stringify(nextHabits)).catch(() => {});
   },
 
-  addHabit: (title: string, description = '', color = '#8b5cf6', icon = 'sparkles-outline') => {
+  addHabit: async (title: string, description = '', color = '#8b5cf6', icon = 'sparkles-outline') => {
     if (!title.trim()) return;
-    const newHabit: Habit = {
-      id: `habit-${Date.now()}`,
-      user_id: 'local-user',
-      title: title.trim(),
-      description: description || null,
-      frequency: 'daily',
-      color,
-      icon,
-      streak_count: 0,
-      created_at: new Date().toISOString(),
-    };
-    const nextHabits = [...get().habits, newHabit];
-    set({ habits: nextHabits });
-    AsyncStorage.setItem(HABITS_STORAGE_KEY, JSON.stringify(nextHabits)).catch(() => {});
+    await useHabitStore.getState().createHabit({ title, description, color, icon });
+    set({ habits: useHabitStore.getState().habits });
   },
 
   addEvent: async (eventData: Partial<CalendarEvent>) => {
