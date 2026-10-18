@@ -171,9 +171,15 @@ export interface Memory {
   title: string;
   description: string | null;
   image_urls: string[];
-  memory_date: string;
+  memory_date: string; // ISO YYYY-MM-DD
+  is_favorite?: boolean;
+  tags?: string[];
   created_at: string;
+  updated_at?: string;
 }
+
+export type MemoryFilter = 'all' | 'favorites' | 'month' | 'year';
+export type MemoryLayout = 'grid' | 'card';
 
 // ─── UI helpers ───────────────────────────────────────────────────────────────
 

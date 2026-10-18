@@ -816,17 +816,28 @@ export default function HomeScreen() {
                   Memories and thoughts captured in your sanctuary
                 </ZText>
               </View>
-              <Pressable
-                onPress={() => {
-                  triggerHaptic();
-                  router.push('/(tabs)/journal');
-                }}
-                hitSlop={8}
-              >
-                <ZText variant="caption" color={colors.primary} style={{ fontWeight: '600' }}>
-                  All ({entries.length})
-                </ZText>
-              </Pressable>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing[2] }}>
+                <Pressable
+                  onPress={() => {
+                    triggerHaptic();
+                    router.push('/memories');
+                  }}
+                  hitSlop={8}
+                >
+                  <ZBadge label="Memories 📷" color={colors.primary} backgroundColor={colors.primarySubtle} />
+                </Pressable>
+                <Pressable
+                  onPress={() => {
+                    triggerHaptic();
+                    router.push('/(tabs)/journal');
+                  }}
+                  hitSlop={8}
+                >
+                  <ZText variant="caption" color={colors.primary} style={{ fontWeight: '600' }}>
+                    Journal ({entries.length})
+                  </ZText>
+                </Pressable>
+              </View>
             </View>
 
             {recentEntries.length === 0 ? (

@@ -259,7 +259,7 @@ export default function CreateScreen() {
             <Pressable
               onPress={() => {
                 triggerHaptic();
-                router.push({ pathname: '/journal/editor', params: { type: 'photo' } });
+                router.push('/memories/editor');
               }}
               style={({ pressed }) => [styles.gridCardPressable, { opacity: pressed ? 0.88 : 1 }]}
               accessibilityLabel="Add a Memory"
