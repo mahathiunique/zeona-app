@@ -129,4 +129,73 @@ export const colors = {
   gradientEnd:      '#f3e8ff', // Soft violet
 } as const;
 
+export const lightColors = colors;
+
+export const darkColors = {
+  // ── Brand ───────────────────────────────────────────────────────────────────
+  primary:          '#a78bfa',
+  primaryLight:     '#c4b5fd',
+  primaryDark:      '#8b5cf6',
+  primarySubtle:    'rgba(167, 139, 250, 0.15)',
+
+  secondary:        '#c084fc',
+  secondaryLight:   '#d8b4fe',
+  secondarySubtle:  'rgba(192, 132, 252, 0.12)',
+
+  accent:           '#fb7185',
+  accentLight:      '#fda4af',
+
+  sage:             '#4ade80',
+  sageSubtle:       'rgba(74, 222, 128, 0.15)',
+
+  peach:            '#fb923c',
+  peachSubtle:      'rgba(251, 146, 60, 0.15)',
+
+  sky:              '#38bdf8',
+  skySubtle:        'rgba(56, 189, 248, 0.15)',
+
+  ivory:            '#1c1926',
+  ivorySubtle:      '#242033',
+
+  // ── Backgrounds ─────────────────────────────────────────────────────────────
+  background:       '#121019',
+  backgroundCard:   '#1c1926',
+  backgroundMuted:  '#242033',
+
+  // ── Surfaces ────────────────────────────────────────────────────────────────
+  surface:          '#1c1926',
+  surfaceOverlay:   'rgba(167, 139, 250, 0.08)',
+
+  // ── Text ────────────────────────────────────────────────────────────────────
+  textPrimary:      '#f8fafc',
+  textSecondary:    '#cbd5e1',
+  textTertiary:     '#94a3b8',
+  textInverse:      '#121019',
+  textBrand:        '#c4b5fd',
+
+  // ── Borders ─────────────────────────────────────────────────────────────────
+  border:           '#2f2942',
+  borderStrong:     '#443b5e',
+
+  // ── Semantic ────────────────────────────────────────────────────────────────
+  success:          '#4ade80',
+  successSubtle:    'rgba(74, 222, 128, 0.15)',
+  warning:          '#fbbf24',
+  warningSubtle:    'rgba(251, 191, 36, 0.15)',
+  error:            '#f87171',
+  errorSubtle:      'rgba(248, 113, 113, 0.15)',
+  info:             '#60a5fa',
+  infoSubtle:       'rgba(96, 165, 250, 0.15)',
+
+  // ── Tab bar ─────────────────────────────────────────────────────────────────
+  tabActive:        '#c4b5fd',
+  tabInactive:      '#64748b',
+  tabBackground:    '#181522',
+
+  // ── Gradient stops ──────────────────────────────────────────────────────────
+  gradientStart:    '#121019',
+  gradientMid:      '#181522',
+  gradientEnd:      '#231c33',
+} as const;
+
 export type ColorKey = keyof typeof colors;

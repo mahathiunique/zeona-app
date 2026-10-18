@@ -17,6 +17,7 @@ import { useJournalStore } from '@/store/journalStore';
 import { useCalendarStore } from '@/store/calendarStore';
 import { useOnboardingStore } from '@/store/onboardingStore';
 import { useReminderStore } from '@/store/reminderStore';
+import { useSettingsStore } from '@/store/settingsStore';
 import { ZLoadingSpinner } from '@/components/ui';
 import { colors } from '@/constants/theme';
 
@@ -38,6 +39,7 @@ export default function RootLayout() {
   const initJournal = useJournalStore((s) => s.initialize);
   const initCalendar = useCalendarStore((s) => s.initialize);
   const initReminders = useReminderStore((s) => s.initialize);
+  const initSettings = useSettingsStore((s) => s.initialize);
   const {
     hasCompletedOnboarding,
     isLoading: isOnboardingLoading,
@@ -50,7 +52,8 @@ export default function RootLayout() {
     initCalendar();
     initOnboarding();
     initReminders();
-  }, [initialize, initJournal, initCalendar, initOnboarding, initReminders]);
+    initSettings();
+  }, [initialize, initJournal, initCalendar, initOnboarding, initReminders, initSettings]);
 
   useEffect(() => {
     if ((fontsLoaded || fontError) && isInitialized && !isOnboardingLoading) {
@@ -82,7 +85,7 @@ export default function RootLayout() {
     // 3. Unauthenticated users (no session and not guest) cannot access protected tabs
     const isAuthed = Boolean(session || isGuest);
     if (!isAuthed) {
-      if (segs[0] === '(tabs)' || !segs[0] || segs[0] === 'journal' || segs[0] === 'tasks' || segs[0] === 'habits' || segs[0] === 'mood' || segs[0] === 'memories' || segs[0] === 'reminders') {
+      if (segs[0] === '(tabs)' || !segs[0] || segs[0] === 'journal' || segs[0] === 'tasks' || segs[0] === 'habits' || segs[0] === 'mood' || segs[0] === 'memories' || segs[0] === 'reminders' || segs[0] === 'settings') {
         router.replace('/(auth)/login');
       }
     } else if (session) {
@@ -129,6 +132,7 @@ export default function RootLayout() {
           <Stack.Screen name="memories/editor" options={{ headerShown: false }} />
           <Stack.Screen name="memories/[id]" options={{ headerShown: false }} />
           <Stack.Screen name="reminders/index" options={{ headerShown: false }} />
+          <Stack.Screen name="settings/index" options={{ headerShown: false }} />
           <Stack.Screen name="+not-found" />
         </Stack>
       </SafeAreaProvider>

@@ -206,6 +206,34 @@ export interface Reminder {
 
 export type ReminderFilter = 'upcoming' | 'completed' | 'all';
 
+// ─── Settings & Preferences ───────────────────────────────────────────────────
+
+export type ThemeMode = 'light' | 'dark' | 'system';
+
+export interface NotificationPreferences {
+  mindfulReminders: boolean;
+  eveningReflection: boolean;
+  habitReminders: boolean;
+  quietHoursEnabled: boolean;
+  quietHoursStart: string; // e.g. "22:00"
+  quietHoursEnd: string;   // e.g. "07:00"
+  soundEnabled: boolean;
+  hapticsEnabled: boolean;
+}
+
+export interface PrivacyPreferences {
+  biometricLock: boolean;
+  anonymousAnalytics: boolean;
+  cloudSyncEnabled: boolean;
+}
+
+export interface UserSettings {
+  themeMode: ThemeMode;
+  notifications: NotificationPreferences;
+  privacy: PrivacyPreferences;
+  updated_at: string;
+}
+
 // ─── UI helpers ───────────────────────────────────────────────────────────────
 
 export type LoadingState = 'idle' | 'loading' | 'success' | 'error';

@@ -305,6 +305,17 @@ export default function ProfileScreen() {
               >
                 <Ionicons name="stats-chart-outline" size={20} color={colors.textSecondary} />
               </Pressable>
+              <Pressable
+                hitSlop={8}
+                style={styles.headerBtn}
+                onPress={() => {
+                  triggerHaptic();
+                  router.push('/settings');
+                }}
+                accessibilityLabel="Settings"
+              >
+                <Ionicons name="settings-outline" size={20} color={colors.textSecondary} />
+              </Pressable>
             </View>
           </View>
 
@@ -475,6 +486,14 @@ export default function ProfileScreen() {
 
           {/* ── Account Settings & Preferences ──────────────────────────── */}
           <ZCard elevation="sm" style={styles.linksCard} radius={radii['2xl']}>
+            <ProfileLink
+              icon="settings-outline"
+              label="Settings & Preferences"
+              subtitle="Appearance, notifications, data export & privacy"
+              color={colors.primary}
+              onPress={() => router.push('/settings')}
+            />
+            <ZDivider marginV={spacing[1]} />
             <ProfileLink
               icon="shield-checkmark-outline"
               label="Privacy & Security"
