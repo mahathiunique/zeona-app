@@ -79,7 +79,7 @@ export default function RootLayout() {
     // 3. Unauthenticated users (no session and not guest) cannot access protected tabs
     const isAuthed = Boolean(session || isGuest);
     if (!isAuthed) {
-      if (segs[0] === '(tabs)' || !segs[0] || segs[0] === 'journal' || segs[0] === 'tasks' || segs[0] === 'habits') {
+      if (segs[0] === '(tabs)' || !segs[0] || segs[0] === 'journal' || segs[0] === 'tasks' || segs[0] === 'habits' || segs[0] === 'mood') {
         router.replace('/(auth)/login');
       }
     } else if (session) {
@@ -120,6 +120,7 @@ export default function RootLayout() {
           <Stack.Screen name="journal/voice" options={{ headerShown: false }} />
           <Stack.Screen name="tasks/index" options={{ headerShown: false }} />
           <Stack.Screen name="habits/index" options={{ headerShown: false }} />
+          <Stack.Screen name="mood/index" options={{ headerShown: false }} />
           <Stack.Screen name="+not-found" />
         </Stack>
       </SafeAreaProvider>

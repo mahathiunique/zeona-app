@@ -17,15 +17,25 @@ export interface UserProfile {
 // ─── Journal ──────────────────────────────────────────────────────────────────
 
 export type JournalEntryType = 'text' | 'voice' | 'photo';
+
+export type CoreMood = 'happy' | 'calm' | 'neutral' | 'anxious' | 'sad';
+
 export type MoodTag =
-  | 'happy'
-  | 'calm'
-  | 'neutral'
-  | 'anxious'
-  | 'sad'
+  | CoreMood
   | 'angry'
   | 'grateful'
   | 'excited';
+
+export interface MoodEntry {
+  id: string;
+  user_id: string;
+  mood: CoreMood;
+  note: string | null;
+  tags: string[];
+  logged_date: string; // ISO YYYY-MM-DD
+  created_at: string;
+  updated_at: string;
+}
 
 export interface JournalEntry {
   id: string;

@@ -335,7 +335,7 @@ export default function CreateScreen() {
             <Pressable
               onPress={() => {
                 triggerHaptic();
-                setActiveModal('mood');
+                router.push('/mood');
               }}
               style={({ pressed }) => [
                 styles.quickActionItem,

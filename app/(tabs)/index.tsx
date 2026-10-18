@@ -24,8 +24,9 @@ import { useCalendarStore } from '@/store/calendarStore';
 import { useJournalStore } from '@/store/journalStore';
 import { useAuthStore } from '@/store/authStore';
 import { useHabitStore } from '@/store/habitStore';
+import { useMoodStore, getLocalTodayDateString } from '@/store/moodStore';
 import { triggerHaptic } from '@/utils/haptics';
-import type { MoodTag, Task, Habit, CalendarEvent, JournalEntry } from '@/types';
+import type { MoodTag, CoreMood, Task, Habit, CalendarEvent, JournalEntry } from '@/types';
 
 // ── Gentle Motivational Messages (Curated & Dynamic) ──────────────────────────
 const GENTLE_MESSAGES = [
@@ -59,6 +60,12 @@ export default function HomeScreen() {
   const { user, isGuest } = useAuthStore();
   const { tasks, toggleTask, habits, activeHabitLog, toggleHabitToday, events } = useCalendarStore();
   const { entries, todayMood, setTodayMood, favorites, toggleFavorite, updateDraft } = useJournalStore();
+  const moodEntries = useMoodStore((s) => s.entries);
+  const saveMoodCheckIn = useMoodStore((s) => s.saveCheckIn);
+  const todayMoodEntry = useMemo(() => {
+    const todayStr = getLocalTodayDateString();
+    return moodEntries.find((e) => e.logged_date === todayStr) || null;
+  }, [moodEntries]);
 
   const [messageIndex, setMessageIndex] = useState(() => {
     const todayNum = new Date().getDate() + new Date().getHours();
@@ -153,10 +160,12 @@ export default function HomeScreen() {
     setMessageIndex((prev) => (prev + 1) % GENTLE_MESSAGES.length);
   };
 
-  const handleSelectMood = (tag: MoodTag) => {
+  const handleSelectMood = async (tag: MoodTag) => {
     triggerHaptic();
     setTodayMood(tag);
     setShowMoodPicker(false);
+    const coreMood = (['happy', 'calm', 'neutral', 'anxious', 'sad'].includes(tag) ? tag : 'calm') as CoreMood;
+    await saveMoodCheckIn({ mood: coreMood });
   };
 
   const activeMoodInfo = MOOD_OPTIONS.find((m) => m.tag === todayMood);
@@ -230,18 +239,30 @@ export default function HomeScreen() {
 
           {/* ── 3. Mood Check-in Card ────────────────────────────────────── */}
           <ZCard style={styles.moodCard} elevation="sm" radius={radii['2xl']}>
-            <View style={styles.cardHeaderRow}>
+            <Pressable
+              onPress={() => {
+                triggerHaptic();
+                router.push('/mood');
+              }}
+              style={styles.cardHeaderRow}
+              accessibilityRole="button"
+              accessibilityLabel="Open Mood Sanctuary"
+            >
               <View style={{ flex: 1, gap: 2 }}>
-                <ZText variant="headingSmall" color={colors.textPrimary}>
-                  Daily Mood Check-In
-                </ZText>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                  <ZText variant="headingSmall" color={colors.textPrimary}>
+                    Daily Mood Check-In
+                  </ZText>
+                  <Ionicons name="chevron-forward" size={16} color={colors.textTertiary} />
+                </View>
                 <ZText variant="caption" color={colors.textSecondary}>
                   {todayMood ? 'Honoring how you feel today' : 'How does your heart feel today?'}
                 </ZText>
               </View>
               {todayMood && (
                 <Pressable
-                  onPress={() => {
+                  onPress={(e) => {
+                    e.stopPropagation?.();
                     triggerHaptic();
                     setShowMoodPicker(!showMoodPicker);
                   }}
@@ -254,7 +275,7 @@ export default function HomeScreen() {
                   />
                 </Pressable>
               )}
-            </View>
+            </Pressable>
 
             {/* If mood is recorded and not changing */}
             {todayMood && !showMoodPicker && activeMoodInfo && (
@@ -269,9 +290,18 @@ export default function HomeScreen() {
                     </ZText>
                     <ZBadge label="Recorded" color={colors.sage} backgroundColor={colors.sageSubtle} />
                   </View>
-                  <ZText variant="caption" color={colors.textSecondary}>
-                    {activeMoodInfo.note}
+                  <ZText variant="caption" color={colors.textSecondary} style={{ fontStyle: todayMoodEntry?.note ? 'italic' : 'normal', lineHeight: 18 }}>
+                    {todayMoodEntry?.note ? `"${todayMoodEntry.note}"` : activeMoodInfo.note}
                   </ZText>
+                  {todayMoodEntry?.tags && todayMoodEntry.tags.length > 0 && (
+                    <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 4, marginTop: 4 }}>
+                      {todayMoodEntry.tags.map((t) => (
+                        <View key={t} style={{ backgroundColor: '#f1f5f9', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 4 }}>
+                          <ZText variant="caption" color={colors.textSecondary} style={{ fontSize: 10 }}>#{t}</ZText>
+                        </View>
+                      ))}
+                    </View>
+                  )}
                 </View>
               </View>
             )}
@@ -316,19 +346,34 @@ export default function HomeScreen() {
             )}
 
             {todayMood && (
-              <Pressable
-                onPress={() => {
-                  triggerHaptic();
-                  updateDraft({ mood: todayMood });
-                  router.push('/(tabs)/create');
-                }}
-                style={styles.reflectionPromptRow}
-              >
-                <Ionicons name="create-outline" size={16} color={colors.primary} />
-                <ZText variant="caption" color={colors.primary} style={{ fontWeight: '600' }}>
-                  Write a quick reflection about this feeling ✍️
-                </ZText>
-              </Pressable>
+              <View style={{ flexDirection: 'row', gap: spacing[2], marginTop: spacing[3] }}>
+                <Pressable
+                  onPress={() => {
+                    triggerHaptic();
+                    router.push('/mood');
+                  }}
+                  style={[styles.reflectionPromptRow, { flex: 1, marginTop: 0 }]}
+                >
+                  <Ionicons name="sparkles-outline" size={16} color={colors.primary} />
+                  <ZText variant="caption" color={colors.primary} style={{ fontWeight: '600' }}>
+                    Mood Sanctuary
+                  </ZText>
+                </Pressable>
+
+                <Pressable
+                  onPress={() => {
+                    triggerHaptic();
+                    updateDraft({ mood: todayMood });
+                    router.push('/(tabs)/create');
+                  }}
+                  style={[styles.reflectionPromptRow, { flex: 1, marginTop: 0 }]}
+                >
+                  <Ionicons name="create-outline" size={16} color={colors.primary} />
+                  <ZText variant="caption" color={colors.primary} style={{ fontWeight: '600' }}>
+                    Journal feeling ✍️
+                  </ZText>
+                </Pressable>
+              </View>
             )}
           </ZCard>
 
