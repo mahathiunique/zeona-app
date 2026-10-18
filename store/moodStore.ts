@@ -14,7 +14,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { supabase } from '@/services/supabase';
 import { useAuthStore } from '@/store/authStore';
 import { useJournalStore } from '@/store/journalStore';
-import type { CoreMood, MoodEntry } from '@/types';
+import type { CoreMood, MoodEntry, InsightPeriod, MoodPeriodStats, MoodDistributionItem } from '@/types';
 
 const MOOD_STORAGE_KEY = 'zeona_mood_entries_v1';
 
@@ -26,21 +26,188 @@ export function getLocalTodayDateString(d: Date = new Date()): string {
   return `${y}-${m}-${day}`;
 }
 
-// ── Initial Seed Data (Gentle historical context) ─────────────────────────────
+export interface PeriodRange {
+  currentStart: string; // YYYY-MM-DD
+  currentEnd: string;   // YYYY-MM-DD
+  previousStart: string; // YYYY-MM-DD
+  previousEnd: string;   // YYYY-MM-DD
+  label: string;
+  daysCount: number;
+}
+
+export function getPeriodDateRanges(period: InsightPeriod, anchorDate: Date = new Date()): PeriodRange {
+  const currentEnd = new Date(anchorDate);
+  const currentStart = new Date(anchorDate);
+  const prevEnd = new Date(anchorDate);
+  const prevStart = new Date(anchorDate);
+
+  if (period === 'week') {
+    // Current 7 days (including today)
+    currentStart.setDate(currentEnd.getDate() - 6);
+    // Prior 7 days
+    prevEnd.setDate(currentStart.getDate() - 1);
+    prevStart.setDate(prevEnd.getDate() - 6);
+    return {
+      currentStart: getLocalTodayDateString(currentStart),
+      currentEnd: getLocalTodayDateString(currentEnd),
+      previousStart: getLocalTodayDateString(prevStart),
+      previousEnd: getLocalTodayDateString(prevEnd),
+      label: 'Past 7 Days',
+      daysCount: 7,
+    };
+  }
+
+  if (period === 'month') {
+    // Current 30 days
+    currentStart.setDate(currentEnd.getDate() - 29);
+    // Prior 30 days
+    prevEnd.setDate(currentStart.getDate() - 1);
+    prevStart.setDate(prevEnd.getDate() - 29);
+    return {
+      currentStart: getLocalTodayDateString(currentStart),
+      currentEnd: getLocalTodayDateString(currentEnd),
+      previousStart: getLocalTodayDateString(prevStart),
+      previousEnd: getLocalTodayDateString(prevEnd),
+      label: 'Past 30 Days',
+      daysCount: 30,
+    };
+  }
+
+  // period === 'year' (past 365 days)
+  currentStart.setDate(currentEnd.getDate() - 364);
+  prevEnd.setDate(currentStart.getDate() - 1);
+  prevStart.setDate(prevEnd.getDate() - 364);
+  return {
+    currentStart: getLocalTodayDateString(currentStart),
+    currentEnd: getLocalTodayDateString(currentEnd),
+    previousStart: getLocalTodayDateString(prevStart),
+    previousEnd: getLocalTodayDateString(prevEnd),
+    label: 'Past 12 Months',
+    daysCount: 365,
+  };
+}
+
+export function formatDateRange(startDateStr: string, endDateStr: string): string {
+  const [sY, sM, sD] = startDateStr.split('-').map(Number);
+  const [eY, eM, eD] = endDateStr.split('-').map(Number);
+  const start = new Date(sY, sM - 1, sD);
+  const end = new Date(eY, eM - 1, eD);
+
+  const startMonth = start.toLocaleDateString('en-US', { month: 'short' });
+  const endMonth = end.toLocaleDateString('en-US', { month: 'short' });
+
+  if (sY === eY) {
+    if (startMonth === endMonth) {
+      return `${startMonth} ${sD} – ${eD}, ${sY}`;
+    }
+    return `${startMonth} ${sD} – ${endMonth} ${eD}, ${sY}`;
+  }
+  return `${startMonth} ${sD}, ${sY} – ${endMonth} ${eD}, ${eY}`;
+}
+
+export function calculatePeriodStats(
+  currentEntries: MoodEntry[],
+  previousEntries: MoodEntry[],
+  period: InsightPeriod,
+  range: PeriodRange
+): MoodPeriodStats {
+  const distribution: Record<CoreMood, MoodDistributionItem> = {
+    happy: { mood: 'happy', count: 0, percentage: 0, label: 'Happy' },
+    calm: { mood: 'calm', count: 0, percentage: 0, label: 'Calm' },
+    neutral: { mood: 'neutral', count: 0, percentage: 0, label: 'Neutral' },
+    anxious: { mood: 'anxious', count: 0, percentage: 0, label: 'Anxious' },
+    sad: { mood: 'sad', count: 0, percentage: 0, label: 'Sad' },
+  };
+
+  const total = currentEntries.length;
+  currentEntries.forEach((entry) => {
+    if (distribution[entry.mood]) {
+      distribution[entry.mood].count += 1;
+    }
+  });
+
+  let dominantMood: CoreMood | null = null;
+  let maxCount = 0;
+
+  (Object.keys(distribution) as CoreMood[]).forEach((m) => {
+    const count = distribution[m].count;
+    distribution[m].percentage = total > 0 ? Math.round((count / total) * 100) : 0;
+    if (count > maxCount) {
+      maxCount = count;
+      dominantMood = m;
+    }
+  });
+
+  const dominantPercentage =
+    total > 0 && dominantMood ? (distribution[dominantMood as CoreMood]?.percentage ?? 0) : 0;
+
+  // Distinct logged dates
+  const distinctDates = new Set(currentEntries.map((e) => e.logged_date)).size;
+  const checkInRatePercent = Math.min(100, Math.round((distinctDates / range.daysCount) * 100));
+
+  // Top context tags
+  const tagCounts: Record<string, number> = {};
+  currentEntries.forEach((e) => {
+    (e.tags || []).forEach((tag) => {
+      tagCounts[tag] = (tagCounts[tag] || 0) + 1;
+    });
+  });
+  const topTags = Object.entries(tagCounts)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 5)
+    .map(([tag, count]) => ({ tag, count }));
+
+  // Comparison with previous period
+  const prevCount = previousEntries.length;
+  const hasSufficientData = prevCount > 0;
+  const deltaCount = total - prevCount;
+  const percentChange = prevCount > 0 ? Math.round(((total - prevCount) / prevCount) * 100) : null;
+
+  let textSummary = '';
+  if (!hasSufficientData) {
+    textSummary = 'Insufficient history in the previous period to generate a comparison. Keep checking in to build your timeline.';
+  } else if (deltaCount > 0) {
+    const pctStr = percentChange !== null && percentChange > 0 ? ` (+${percentChange}%)` : '';
+    textSummary = `You logged ${deltaCount} more ${deltaCount === 1 ? 'check-in' : 'check-ins'}${pctStr} compared to the previous ${period} (${prevCount} recorded).`;
+  } else if (deltaCount < 0) {
+    const pctStr = percentChange !== null ? ` (${percentChange}%)` : '';
+    textSummary = `You logged ${Math.abs(deltaCount)} fewer ${Math.abs(deltaCount) === 1 ? 'check-in' : 'check-ins'}${pctStr} compared to the previous ${period} (${prevCount} recorded).`;
+  } else {
+    textSummary = `Consistent rhythm: check-in frequency matched the previous ${period} exactly (${total} check-ins).`;
+  }
+
+  return {
+    period,
+    startDate: range.currentStart,
+    endDate: range.currentEnd,
+    dateRangeFormatted: formatDateRange(range.currentStart, range.currentEnd),
+    totalCheckIns: total,
+    daysInPeriod: range.daysCount,
+    checkInRatePercent,
+    distribution,
+    dominantMood,
+    dominantPercentage,
+    comparison: {
+      hasSufficientData,
+      previousCount: prevCount,
+      currentCount: total,
+      deltaCount,
+      percentChange,
+      textSummary,
+    },
+    topTags,
+    entries: currentEntries,
+  };
+}
+
+// ── Initial Seed Data (Rich historical context across 2 weeks) ───────────────
 function generateSeedMoods(): MoodEntry[] {
   const today = new Date();
-
-  // Yesterday
-  const yesterday = new Date(today);
-  yesterday.setDate(today.getDate() - 1);
-
-  // 2 days ago
-  const twoDaysAgo = new Date(today);
-  twoDaysAgo.setDate(today.getDate() - 2);
-
-  // 3 days ago
-  const threeDaysAgo = new Date(today);
-  threeDaysAgo.setDate(today.getDate() - 3);
+  const daysAgo = (n: number) => {
+    const d = new Date(today);
+    d.setDate(today.getDate() - n);
+    return d;
+  };
 
   return [
     {
@@ -49,9 +216,9 @@ function generateSeedMoods(): MoodEntry[] {
       mood: 'calm',
       note: 'Took a slow stroll under the evening trees. The air was cool and crisp.',
       tags: ['Nature', 'Solitude', 'Rest'],
-      logged_date: getLocalTodayDateString(yesterday),
-      created_at: yesterday.toISOString(),
-      updated_at: yesterday.toISOString(),
+      logged_date: getLocalTodayDateString(daysAgo(1)),
+      created_at: daysAgo(1).toISOString(),
+      updated_at: daysAgo(1).toISOString(),
     },
     {
       id: 'mood-seed-2',
@@ -59,9 +226,9 @@ function generateSeedMoods(): MoodEntry[] {
       mood: 'happy',
       note: 'Finished my quarterly reading goal and made warm chamomile tea.',
       tags: ['Creativity', 'Rest', 'Growth'],
-      logged_date: getLocalTodayDateString(twoDaysAgo),
-      created_at: twoDaysAgo.toISOString(),
-      updated_at: twoDaysAgo.toISOString(),
+      logged_date: getLocalTodayDateString(daysAgo(2)),
+      created_at: daysAgo(2).toISOString(),
+      updated_at: daysAgo(2).toISOString(),
     },
     {
       id: 'mood-seed-3',
@@ -69,9 +236,59 @@ function generateSeedMoods(): MoodEntry[] {
       mood: 'neutral',
       note: 'A quiet, ordinary Tuesday. Just moving through tasks with steady breath.',
       tags: ['Work', 'Health'],
-      logged_date: getLocalTodayDateString(threeDaysAgo),
-      created_at: threeDaysAgo.toISOString(),
-      updated_at: threeDaysAgo.toISOString(),
+      logged_date: getLocalTodayDateString(daysAgo(3)),
+      created_at: daysAgo(3).toISOString(),
+      updated_at: daysAgo(3).toISOString(),
+    },
+    {
+      id: 'mood-seed-4',
+      user_id: 'local-user',
+      mood: 'anxious',
+      note: 'Felt a bit fluttery before the presentation, but grounded myself with gentle breathing.',
+      tags: ['Work', 'Health'],
+      logged_date: getLocalTodayDateString(daysAgo(5)),
+      created_at: daysAgo(5).toISOString(),
+      updated_at: daysAgo(5).toISOString(),
+    },
+    {
+      id: 'mood-seed-5',
+      user_id: 'local-user',
+      mood: 'happy',
+      note: 'Coffee morning with my dear friend. Laughed so much my cheeks hurt.',
+      tags: ['Friends', 'Rest'],
+      logged_date: getLocalTodayDateString(daysAgo(6)),
+      created_at: daysAgo(6).toISOString(),
+      updated_at: daysAgo(6).toISOString(),
+    },
+    {
+      id: 'mood-seed-6',
+      user_id: 'local-user',
+      mood: 'calm',
+      note: 'Peaceful Sunday journaling session by the sunny window.',
+      tags: ['Creativity', 'Rest'],
+      logged_date: getLocalTodayDateString(daysAgo(8)),
+      created_at: daysAgo(8).toISOString(),
+      updated_at: daysAgo(8).toISOString(),
+    },
+    {
+      id: 'mood-seed-7',
+      user_id: 'local-user',
+      mood: 'sad',
+      note: 'Missing home a little bit today. Wrapping myself in a warm blanket and resting.',
+      tags: ['Family', 'Rest'],
+      logged_date: getLocalTodayDateString(daysAgo(10)),
+      created_at: daysAgo(10).toISOString(),
+      updated_at: daysAgo(10).toISOString(),
+    },
+    {
+      id: 'mood-seed-8',
+      user_id: 'local-user',
+      mood: 'calm',
+      note: 'Gentle morning yoga and slow oats.',
+      tags: ['Health', 'Nature'],
+      logged_date: getLocalTodayDateString(daysAgo(12)),
+      created_at: daysAgo(12).toISOString(),
+      updated_at: daysAgo(12).toISOString(),
     },
   ];
 }
@@ -92,6 +309,7 @@ interface MoodStoreState {
   }) => Promise<MoodEntry>;
   updateEntry: (id: string, updates: Partial<MoodEntry>) => Promise<MoodEntry | null>;
   deleteEntry: (id: string) => Promise<void>;
+  fetchEntriesForPeriod: (startDate: string, endDate: string) => Promise<MoodEntry[]>;
 
   // Queries
   getTodayMood: () => MoodEntry | null;
@@ -289,6 +507,33 @@ export const useMoodStore = create<MoodStoreState>((set, get) => ({
         console.warn('[Zeona Mood] Supabase delete notice:', err);
       }
     }
+  },
+
+  fetchEntriesForPeriod: async (startDate: string, endDate: string) => {
+    const user = useAuthStore.getState().user;
+    if (supabase && user) {
+      try {
+        const { data, error } = await supabase
+          .from('mood_entries')
+          .select('*')
+          .eq('user_id', user.id)
+          .gte('logged_date', startDate)
+          .lte('logged_date', endDate)
+          .order('logged_date', { ascending: false })
+          .order('created_at', { ascending: false });
+
+        if (!error && data) {
+          return data as MoodEntry[];
+        }
+      } catch (err) {
+        console.warn('[Zeona Mood] Supabase fetchEntriesForPeriod notice:', err);
+      }
+    }
+
+    // Resilient fallback: filter local entries
+    return get().entries.filter(
+      (e) => e.logged_date >= startDate && e.logged_date <= endDate
+    );
   },
 
   getTodayMood: () => {

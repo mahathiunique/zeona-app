@@ -306,6 +306,22 @@ export default function MoodCheckInScreen() {
                 Honoring how you feel with kind curiosity 🌸
               </ZText>
             </View>
+
+            <Pressable
+              hitSlop={8}
+              onPress={() => {
+                triggerHaptic();
+                router.push('/mood/insights');
+              }}
+              style={styles.insightsButton}
+              accessibilityLabel="View Mood Insights"
+              accessibilityRole="button"
+            >
+              <Ionicons name="bar-chart-outline" size={16} color={colors.primary} />
+              <ZText variant="caption" color={colors.primary} style={{ fontWeight: '700', marginLeft: 4 }}>
+                Insights
+              </ZText>
+            </Pressable>
           </View>
 
           {/* ── Tabs: Check-in vs History ───────────────────────────────── */}
@@ -939,6 +955,16 @@ const styles = StyleSheet.create({
   headerTextWrapper: {
     flex: 1,
     marginLeft: spacing[3],
+  },
+  insightsButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.primarySubtle,
+    paddingHorizontal: spacing[3],
+    paddingVertical: spacing[1.5],
+    borderRadius: radii.full,
+    borderWidth: 1,
+    borderColor: colors.primaryLight,
   },
 
   // Tabs

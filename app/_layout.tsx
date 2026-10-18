@@ -121,6 +121,7 @@ export default function RootLayout() {
           <Stack.Screen name="tasks/index" options={{ headerShown: false }} />
           <Stack.Screen name="habits/index" options={{ headerShown: false }} />
           <Stack.Screen name="mood/index" options={{ headerShown: false }} />
+          <Stack.Screen name="mood/insights" options={{ headerShown: false }} />
           <Stack.Screen name="+not-found" />
         </Stack>
       </SafeAreaProvider>

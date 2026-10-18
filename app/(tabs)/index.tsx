@@ -354,9 +354,22 @@ export default function HomeScreen() {
                   }}
                   style={[styles.reflectionPromptRow, { flex: 1, marginTop: 0 }]}
                 >
-                  <Ionicons name="sparkles-outline" size={16} color={colors.primary} />
+                  <Ionicons name="sparkles-outline" size={15} color={colors.primary} />
                   <ZText variant="caption" color={colors.primary} style={{ fontWeight: '600' }}>
-                    Mood Sanctuary
+                    Sanctuary
+                  </ZText>
+                </Pressable>
+
+                <Pressable
+                  onPress={() => {
+                    triggerHaptic();
+                    router.push('/mood/insights');
+                  }}
+                  style={[styles.reflectionPromptRow, { flex: 1, marginTop: 0 }]}
+                >
+                  <Ionicons name="bar-chart-outline" size={15} color={colors.primary} />
+                  <ZText variant="caption" color={colors.primary} style={{ fontWeight: '600' }}>
+                    Insights
                   </ZText>
                 </Pressable>
 
@@ -368,9 +381,9 @@ export default function HomeScreen() {
                   }}
                   style={[styles.reflectionPromptRow, { flex: 1, marginTop: 0 }]}
                 >
-                  <Ionicons name="create-outline" size={16} color={colors.primary} />
+                  <Ionicons name="create-outline" size={15} color={colors.primary} />
                   <ZText variant="caption" color={colors.primary} style={{ fontWeight: '600' }}>
-                    Journal feeling ✍️
+                    Journal ✍️
                   </ZText>
                 </Pressable>
               </View>

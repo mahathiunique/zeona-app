@@ -37,6 +37,40 @@ export interface MoodEntry {
   updated_at: string;
 }
 
+export type InsightPeriod = 'week' | 'month' | 'year';
+
+export interface MoodDistributionItem {
+  mood: CoreMood;
+  count: number;
+  percentage: number;
+  label: string;
+}
+
+export interface PeriodComparison {
+  hasSufficientData: boolean;
+  previousCount: number;
+  currentCount: number;
+  deltaCount: number;
+  percentChange: number | null; // e.g. +25 or -10
+  textSummary: string;
+}
+
+export interface MoodPeriodStats {
+  period: InsightPeriod;
+  startDate: string;
+  endDate: string;
+  dateRangeFormatted: string;
+  totalCheckIns: number;
+  daysInPeriod: number;
+  checkInRatePercent: number;
+  distribution: Record<CoreMood, MoodDistributionItem>;
+  dominantMood: CoreMood | null;
+  dominantPercentage: number;
+  comparison: PeriodComparison;
+  topTags: { tag: string; count: number }[];
+  entries: MoodEntry[];
+}
+
 export interface JournalEntry {
   id: string;
   user_id: string;
