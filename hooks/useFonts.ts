@@ -14,9 +14,11 @@ import {
   PlayfairDisplay_700Bold,
   PlayfairDisplay_400Regular_Italic,
 } from '@expo-google-fonts/playfair-display';
+import { Ionicons } from '@expo/vector-icons';
 
 export function useZeonaFonts() {
   const [fontsLoaded, fontError] = useFonts({
+    ...Ionicons.font,
     DMSans_400Regular,
     DMSans_500Medium,
     // Alias for SemiBold (DM Sans doesn't have 600 in the package; use 500 + bold weight)
@@ -29,3 +31,4 @@ export function useZeonaFonts() {
 
   return { fontsLoaded, fontError };
 }
+

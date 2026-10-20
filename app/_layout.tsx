@@ -9,7 +9,7 @@ import { Stack, useRouter, useSegments, useRootNavigationState } from 'expo-rout
 import * as SplashScreen from 'expo-splash-screen';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
-import { StyleSheet } from 'react-native';
+import { StyleSheet, View, Image } from 'react-native';
 
 import { useZeonaFonts } from '@/hooks/useFonts';
 import { useAuthStore } from '@/store/authStore';
@@ -106,7 +106,14 @@ export default function RootLayout() {
   ]);
 
   if (!fontsLoaded && !fontError) {
-    return null; // Splash screen still visible
+    return (
+      <View style={{ flex: 1, backgroundColor: '#fefef6', justifyContent: 'center', alignItems: 'center' }}>
+        <Image
+          source={require('@/assets/images/splash-icon.png')}
+          style={{ width: 180, height: 180, resizeMode: 'contain' }}
+        />
+      </View>
+    );
   }
 
   if (!isInitialized || isOnboardingLoading) {
