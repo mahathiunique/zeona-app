@@ -8,6 +8,8 @@ build/
 web-build/
 android/
 ios/
+.temp/
+supabase/.temp/
 
 # Environment secrets
 .env

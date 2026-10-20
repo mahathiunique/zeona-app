@@ -21,7 +21,8 @@ import {
   type NotificationPermissionInfo,
 } from '@/services/notificationService';
 import { getLocalTodayDateString } from '@/store/moodStore';
-import type { Reminder, ReminderFilter, ReminderRelatedType } from '@/types';
+import { generateUUID } from '@/utils/uuid';
+import type { Reminder, ReminderRelatedType } from '@/types';
 
 const REMINDERS_STORAGE_KEY = 'zeona_reminders_v1';
 
@@ -185,7 +186,7 @@ export const useReminderStore = create<ReminderStoreState>((set, get) => ({
     const user = useAuthStore.getState().user;
     const storageKey = user ? `${REMINDERS_STORAGE_KEY}_${user.id}` : REMINDERS_STORAGE_KEY;
 
-    const newId = `reminder-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`;
+    const newId = generateUUID();
 
     // Try scheduling device notification
     const schedResult = await scheduleDeviceReminder({

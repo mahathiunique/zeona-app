@@ -14,6 +14,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { supabase } from '@/services/supabase';
 import { useAuthStore } from '@/store/authStore';
 import { deleteMemoryPhoto } from '@/services/photoStorage';
+import { generateUUID } from '@/utils/uuid';
 import type { Memory } from '@/types';
 
 const MEMORY_STORAGE_KEY = 'zeona_memories_v1';
@@ -160,7 +161,7 @@ export const useMemoryStore = create<MemoryStoreState>((set, get) => ({
     const storageKey = user ? `${MEMORY_STORAGE_KEY}_${user.id}` : MEMORY_STORAGE_KEY;
 
     const newMemory: Memory = {
-      id: `memory-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
+      id: generateUUID(),
       user_id: user?.id || 'local-user',
       title: data.title.trim(),
       description: data.description?.trim() || null,

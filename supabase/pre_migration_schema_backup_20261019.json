@@ -1,0 +1,82 @@
+{
+  "exported_at": "2026-10-19T04:19:59.959471+00:00",
+  "project_ref": "hjfzbdyowrjxxdytdsnl",
+  "environment": "main (PRODUCTION)",
+  "source": "Supabase SQL Editor / PostgreSQL System Catalogs",
+  "tables": [
+    {
+      "name": "profiles",
+      "columns": [
+        { "name": "id", "type": "uuid", "is_primary_key": true },
+        { "name": "username", "type": "text" },
+        { "name": "full_name", "type": "text" },
+        { "name": "timezone", "type": "text" },
+        { "name": "created_at", "type": "timestamp with time zone" }
+      ]
+    },
+    {
+      "name": "memories",
+      "columns": [
+        { "name": "id", "type": "uuid", "is_primary_key": true },
+        { "name": "user_id", "type": "uuid" },
+        { "name": "title", "type": "text" },
+        { "name": "description", "type": "text" },
+        { "name": "memory_date", "type": "date" },
+        { "name": "photo_url", "type": "text" },
+        { "name": "created_at", "type": "timestamp with time zone" }
+      ]
+    },
+    {
+      "name": "calendar_events",
+      "columns": [
+        { "name": "id", "type": "uuid", "is_primary_key": true },
+        { "name": "user_id", "type": "uuid" },
+        { "name": "title", "type": "text" },
+        { "name": "description", "type": "text" },
+        { "name": "start_time", "type": "timestamp with time zone" },
+        { "name": "end_time", "type": "timestamp with time zone" },
+        { "name": "created_at", "type": "timestamp with time zone" }
+      ]
+    },
+    {
+      "name": "reminders",
+      "columns": [
+        { "name": "id", "type": "uuid", "is_primary_key": true },
+        { "name": "user_id", "type": "uuid" },
+        { "name": "title", "type": "text" },
+        { "name": "due_time", "type": "timestamp with time zone" },
+        { "name": "is_active", "type": "boolean" },
+        { "name": "created_at", "type": "timestamp with time zone" }
+      ]
+    },
+    {
+      "name": "voice_recordings",
+      "columns": [
+        { "name": "id", "type": "uuid", "is_primary_key": true },
+        { "name": "user_id", "type": "uuid" },
+        { "name": "title", "type": "text" },
+        { "name": "duration", "type": "integer" },
+        { "name": "file_url", "type": "text" },
+        { "name": "transcript", "type": "text" },
+        { "name": "created_at", "type": "timestamp with time zone" }
+      ]
+    },
+    {
+      "name": "mood_entries",
+      "columns": [
+        { "name": "id", "type": "bigint", "is_primary_key": true },
+        { "name": "created_at", "type": "timestamp with time zone" },
+        { "name": "user_id", "type": "uuid" },
+        { "name": "mood", "type": "text" },
+        { "name": "content", "type": "text" }
+      ]
+    },
+    {
+      "name": "journal_entries",
+      "columns": [
+        { "name": "id", "type": "uuid", "is_primary_key": true },
+        { "name": "created_at", "type": "timestamp with time zone" }
+      ]
+    }
+  ]
+}

@@ -8,6 +8,7 @@ import { create } from 'zustand';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { supabase } from '@/services/supabase';
 import { useAuthStore } from '@/store/authStore';
+import { generateUUID } from '@/utils/uuid';
 import type { JournalEntry, JournalEntryType, MoodTag } from '@/types';
 
 const DRAFT_STORAGE_KEY = 'zeona_journal_draft_v1';
@@ -149,7 +150,7 @@ export const useJournalStore = create<JournalState>((set, get) => ({
       const localJson = await AsyncStorage.getItem(storageKey);
       const localEntries: JournalEntry[] = localJson ? JSON.parse(localJson) : [];
       set({ entries: localEntries, isLoading: false, error: null });
-    } catch (err: any) {
+    } catch {
       set({ entries: [], isLoading: false, error: 'Failed to load local journal entries.' });
     }
   },
@@ -209,7 +210,7 @@ export const useJournalStore = create<JournalState>((set, get) => ({
     const storageKey = user ? `zeona_entries_${user.id}` : 'zeona_guest_entries_v1';
 
     const newEntry: JournalEntry = {
-      id: `entry-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
+      id: generateUUID(),
       user_id: userId,
       title: entryData.title?.trim() || 'Untitled Reflection',
       content: entryData.content?.trim() || '',

@@ -13,6 +13,7 @@ import { create } from 'zustand';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { supabase } from '@/services/supabase';
 import { useAuthStore } from '@/store/authStore';
+import { generateUUID } from '@/utils/uuid';
 import type { Habit, HabitLog, HabitFrequency } from '@/types';
 import {
   toLocalDateString,
@@ -234,7 +235,7 @@ export const useHabitStore = create<HabitStoreState>((set, get) => ({
     const habitsKey = user ? `${HABITS_STORAGE_KEY}_${user.id}` : HABITS_STORAGE_KEY;
 
     const newHabit: Habit = {
-      id: `habit-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
+      id: generateUUID(),
       user_id: user?.id || 'local-user',
       title: data.title.trim(),
       description: data.description?.trim() || null,
@@ -327,7 +328,7 @@ export const useHabitStore = create<HabitStoreState>((set, get) => ({
       try {
         await Promise.all([
           supabase.from('habits').delete().eq('id', id).eq('user_id', user.id),
-          supabase.from('habit_logs').delete().eq('habit_id', id).eq('user_id', user.id),
+          supabase.from('habit_completions').delete().eq('habit_id', id).eq('user_id', user.id),
         ]);
       } catch (err) {
         console.warn('[Zeona Habits] Supabase delete notice:', err);
@@ -354,7 +355,7 @@ export const useHabitStore = create<HabitStoreState>((set, get) => ({
 
       if (supabase && user) {
         try {
-          await supabase.from('habit_logs').delete().eq('id', existingLog.id);
+          await supabase.from('habit_completions').delete().eq('habit_id', habitId).eq('completed_date', dateStr).eq('user_id', user.id);
         } catch (err) {
           console.warn('[Zeona Habits] Supabase undo notice:', err);
         }
@@ -362,7 +363,7 @@ export const useHabitStore = create<HabitStoreState>((set, get) => ({
     } else {
       // Complete habit — prevent duplicate
       const newLog: HabitLog = {
-        id: `log-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
+        id: generateUUID(),
         habit_id: habitId,
         user_id: user?.id || 'local-user',
         logged_date: dateStr,
@@ -373,7 +374,12 @@ export const useHabitStore = create<HabitStoreState>((set, get) => ({
 
       if (supabase && user) {
         try {
-          await supabase.from('habit_logs').insert([newLog]);
+          await supabase.from('habit_completions').insert([{
+            id: newLog.id,
+            habit_id: habitId,
+            user_id: user.id,
+            completed_date: dateStr,
+          }]);
         } catch (err) {
           console.warn('[Zeona Habits] Supabase log notice:', err);
         }
@@ -456,7 +462,6 @@ export const useHabitStore = create<HabitStoreState>((set, get) => ({
 
   getOverallStats: () => {
     const activeHabits = get().habits.filter((h) => !h.is_archived);
-    const todayStr = toLocalDateString();
     const weekDays = getCurrentWeekDays();
     const weekDateStrings = weekDays.map((d) => d.dateStr);
 

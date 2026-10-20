@@ -139,7 +139,7 @@ export function useAudioPlayer(initialAudioSource: string | null, knownDuration?
         try {
           await webAudioRef.current.play();
           setIsPlaying(true);
-        } catch (err: any) {
+        } catch {
           setError('Playback blocked by browser or failed.');
         }
       }
@@ -147,7 +147,7 @@ export function useAudioPlayer(initialAudioSource: string | null, knownDuration?
       try {
         await nativeSoundRef.current.playAsync();
         setIsPlaying(true);
-      } catch (err: any) {
+      } catch {
         setError('Failed to start playback.');
       }
     }
