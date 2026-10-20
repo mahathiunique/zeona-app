@@ -1,140 +1,114 @@
-# Zeona — Your Daily Life Companion 
-<p><strong>A personal, calm and private companion for emotional wellness, daily reflection, habits, voice journaling and mindful focus.</strong></p>
+# Zeona — Your Daily Life Companion & Wellness Sanctuary
 
-## 🌸 What is Zeona?
+<div align="center">
+  <img src="./assets/images/splash-icon.png" alt="Zeona Logo" width="180" style="border-radius: 24px;" />
+  <p><strong>A personal, calm, and private companion for daily reflection, emotional wellness, habits, voice journaling, and mindful focus.</strong></p>
 
-**Zeona** is a privacy-first mobile companion designed to help you slow down, acknowledge how you feel, and organize your life with gentleness rather than urgency.
-
-Unlike conventional productivity apps that induce pressure through endless to-do lists and rigid metrics, Zeona provides a peaceful **Sanctuary**. It blends **emotional check-ins**, **reflective writing**, **voice journaling**, **gentle habit tracking**, and **cherished memories** into a single cohesive, calming experience.
-
----
-
-## 🎨 Design Philosophy & Aesthetic
-
-* **Soothing Pastel Palette**: Calming lavender (`#8b5cf6`), gentle sage green (`#10b981`), rose, and warm cream (`#fefef6`) backgrounds reduce visual fatigue.
-* **Warm Typography**: Headings rendered in **Playfair Display** paired with **DM Sans** body text for an inviting editorial feel.
-* **Non-Punitive Design**: No flashing red alerts or aggressive shame-based reminders. Streaks celebrate consistency while allowing room for rest.
-* **Tactile Interactions**: Subtle haptic feedback and gentle micro-animations make interactions feel grounded and intentional.
+  [![Expo SDK 52](https://img.shields.io/badge/Expo-SDK%2052-000020.svg?style=flat&logo=expo)](https://expo.dev)
+  [![React Native 0.76](https://img.shields.io/badge/React%20Native-0.76.3-61DAFB.svg?style=flat&logo=react)](https://reactnative.dev)
+  [![TypeScript](https://img.shields.io/badge/TypeScript-5.3-3178C6.svg?style=flat&logo=typescript)](https://www.typescriptlang.org)
+  [![Supabase](https://img.shields.io/badge/Supabase-Backend%20%26%20RLS-3ECF8E.svg?style=flat&logo=supabase)](https://supabase.com)
+  [![License](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+</div>
 
 ---
 
-## ✨ Core Features
-
-### 1. Dashboard Sanctuary
-* **Dynamic Time Greetings**: Context-aware greetings (*"Good morning"*, *"Good afternoon"*, *"Good evening"*).
-* **Gentle Motivational Wisdom**: Curated, rotating mindfulness affirmations. Tap the sync button anytime for a fresh perspective.
-* **Quick Access Bar**: One-tap shortcuts to write a journal entry, record a voice diary, review daily tasks, or open the calendar.
-* **Daily Focus Snippet**: Surface up to 3 essential intentions without clutter.
-
-### 2. Daily Mood Check-In & Emotional Insights
-* **Expressive Mood Spectrum**: Check in with core feelings (Calm 😌, Happy 😊, Grateful ✨, Neutral 😐, Anxious 😟, Low 🌧️).
-* **Contextual Tags**: Associate moods with activities (Work, Family, Rest, Nature, Sleep, Exercise).
-* **Mood Sanctuary**: Revisit past days and emotional notes.
-* **Visual Insights**: Charts illustrating mood distribution and energy patterns over 7, 30, and 90-day periods.
-
-### 3. Reflective Journaling
-* **Calm Rich Editor**: Distraction-free space for freeform thoughts, gratitude notes, and life lessons.
-* **Draft Auto-Preservation**: Never lose an unfinished reflection.
-* **Favorites & Bookmarks**: Star entries to revisit meaningful milestones.
-* **Search & Filters**: Filter reflections by mood tag or search by keyword.
-
-### 4. Voice Diaries
-* **Voice Recording**: Instant audio capture with real-time waveform visualizers and elapsed timer.
-* **In-App Playback**: Native scrubber, pause, resume, and playback controls.
-* **Secure Cloud Storage**: Voice memos are stored in isolated, private Supabase Storage buckets accessible only by your authenticated account.
-
-### 5. Mindful Priorities (Tasks)
-* **Essential Intentions**: Group tasks into manageable categories (Today, Upcoming, Completed).
-* **Simple Check-Off**: Smooth completion toggling with reassuring haptic feedback.
-* **Zero Overwhelm**: Designed for 3–5 meaningful priorities per day rather than infinite backlogs.
-
-### 6. Habit Tracker & Streaks
-* **Weekly Strip Overview**: 7-day visual check-in strip directly on the home screen.
-* **Calculated Streaks**: Best streak and current streak metrics computed strictly from verified completion logs.
-* **Custom Habit Frequency**: Support for daily, weekly, and flexible mindfulness routines.
-
-### 7. Private Memories Gallery
-* **Cherished Photos**: Upload and organize photos representing moments of peace and gratitude.
-* **Private Photo Isolation**: Images are stored in user-isolated storage folders (`<user_id>/...`).
-* **Memory Journaling**: Add captions, dates, and reflections to any saved photo.
-
-### 8. Unified Calm Calendar
-* **Integrated Timeline**: Combines scheduled tasks, habit completion markers, and journal entries in one monthly and agenda view.
-* **Day-at-a-Glance**: Tap any date to inspect historical logs and past reflections.
-
-### 9. Sanctuary Settings & Privacy
-* **Display & Identity**: Edit your preferred display name or avatar.
-* **Custom Reminder Schedules**: Gentle notification reminders configured to your personal rhythm.
-* **Complete Data Autonomy**: Export personal data or securely delete your account at any time.
+## 📖 Table of Contents
+- [About Zeona](#-about-zeona)
+- [Key Features](#-key-features)
+- [Prerequisites](#-prerequisites)
+- [Step-by-Step Installation](#-step-by-step-installation)
+- [Configuration (.env)](#-configuration-env)
+- [Running the Project Locally](#-running-the-project-locally)
+- [Code Quality & Verification](#-code-quality--verification)
+- [Building Standalone Android APK (EAS)](#-building-standalone-android-apk-eas)
+- [Project Architecture](#-project-architecture)
+- [Security & Data Privacy](#-security--data-privacy)
 
 ---
 
-## 🛠 Tech Stack & Architecture
+## 🌿 About Zeona
 
-| Layer | Technology |
-|---|---|
-| **Framework** | [React Native 0.76](https://reactnative.dev) with [Expo SDK 52](https://expo.dev) |
-| **Routing** | [Expo Router](https://docs.expo.dev/router/introduction/) (File-based navigation) |
-| **Language** | [TypeScript 5.3](https://www.typescriptlang.org) (Strict mode) |
-| **State Management** | [Zustand](https://github.com/pmndrs/zustand) with AsyncStorage persistence |
-| **Backend & Auth** | [Supabase](https://supabase.com) (PostgreSQL, Row-Level Security, Auth) |
-| **Cloud Storage** | Supabase Storage (Private audio & photo buckets) |
-| **Audio & Media** | `expo-av`, `expo-image-picker` |
-| **Icons & Typography** | `@expo/vector-icons` (Ionicons), `@expo-google-fonts/dm-sans`, `@expo-google-fonts/playfair-display` |
-| **Cloud Builds** | [Expo Application Services (EAS)](https://expo.dev/eas) |
+**Zeona** is designed to bring calm, intentionality, and gentle encouragement to your everyday life. Built from the ground up with a soothing lavender and sage aesthetic, Zeona is an offline-friendly, privacy-first mobile companion that connects your daily moods, mindful tasks, reflective notes, audio voice diaries, and personal photo memories into a cohesive wellness journey.
+
+---
+
+## ✨ Key Features
+
+- **🌸 Dashboard & Sanctuary**: Personalized dynamic greetings, gentle rotating wisdom, and quick access to daily priorities.
+- **😌 Daily Mood Check-In**: Track emotional state with contextual tags, deep mood history, and longitudinal emotional insights.
+- **✍️ Daily Reflections & Journaling**: Calming editor with mood tagging, favorites bookmarking, search, and draft preservation.
+- **🎙️ Voice Diaries**: Fluid voice journal recording, animated waveforms, local playback, and private cloud audio storage.
+- **✅ Mindful Priorities**: Focused daily task management without overwhelming clutter.
+- **🌱 Habit Tracking**: Weekly streak visualization, streak calculations, and daily check-ins.
+- **🖼️ Private Memories**: Cherished moments gallery with secure photo storage and privacy isolation.
+- **📅 Calm Calendar**: Unified view of scheduled milestones, habits, and journal reflections.
+- **⚙️ Sanctuary Settings**: Theme customization, notifications, export data, and complete account autonomy.
 
 ---
 
 ## 📋 Prerequisites
 
-Before setting up Zeona, ensure your environment meets the following requirements:
+Before setting up Zeona, ensure you have the following installed on your development machine:
 
 1. **Node.js**: `v18.x` or `v20.x` LTS ([Download Node.js](https://nodejs.org/))
-2. **Package Manager**: `npm` (v9+) or `yarn`
-3. **Git**: Installed and configured on your system
-4. **Expo CLI**: Accessed via `npx expo`
-5. **EAS CLI** *(Required only for building standalone APKs)*:
+2. **Package Manager**: `npm` (comes with Node) or `yarn` / `pnpm`
+3. **Git**: Version control ([Download Git](https://git-scm.com/))
+4. **Expo CLI**: Available via `npx expo`
+5. **EAS CLI** (Optional, for Android APK builds):
    ```bash
    npm install -g eas-cli
    ```
-6. **Device / Emulator**:
-   - **Android**: Physical phone with USB debugging enabled, or an Android Studio virtual device.
-   - **iOS** *(macOS only)*: Xcode with iOS Simulator.
-   - **Web**: Modern browser (Chrome, Safari, Firefox).
+6. **Hardware / Emulators**:
+   - **Android**: Android Studio with an Android 13+ virtual device, or a physical Android phone with Developer Mode enabled.
+   - **iOS** (macOS only): Xcode 15+ for iOS simulator.
+   - **Web**: Modern Chromium, Firefox, or Safari browser.
 
 ---
 
-## 🚀 Step-by-Step Setup Guide
+## 🚀 Step-by-Step Installation
 
-### 1. Clone Repository
+### 1. Clone the Repository
 ```bash
 git clone https://github.com/mahathiunique/zeona-app.git
 cd zeona-app
 ```
 
-### 2. Install Dependencies
+### 2. Install Project Dependencies
 ```bash
 npm install
 ```
-*(If dependency resolution conflicts occur on newer npm versions, run `npm install --legacy-peer-deps`)*.
 
-### 3. Configure Environment Variables
-Create your local `.env` file from the provided template:
-```bash
-cp .env.example .env
-```
+> **Note**: If you run into peer dependency issues on npm 7+, run `npm install --legacy-peer-deps`.
 
-Open `.env` and enter your public Supabase credentials:
-```env
-# ─── Supabase Configuration ───────────────────────────────────────────────
-EXPO_PUBLIC_SUPABASE_URL=https://<your-project-id>.supabase.co
-EXPO_PUBLIC_SUPABASE_ANON_KEY=sb_publishable_<your-anon-key>
-```
-> 🔒 **Security Notice**: Never paste your Supabase `service_role` key into client-side code or `.env`. Only use the public publishable anon key.
+---
 
-### 4. Run Locally
+## 🔑 Configuration (.env)
 
-#### Option A: Run on Web (Instant in Browser)
+Zeona connects to Supabase for authentication, cloud database records, and private storage buckets.
+
+1. Copy the example environment template:
+   ```bash
+   cp .env.example .env
+   ```
+
+2. Open `.env` and verify your public credentials:
+   ```env
+   # ─── Supabase Configuration ───────────────────────────────────────────────
+   EXPO_PUBLIC_SUPABASE_URL=https://<your-project-ref>.supabase.co
+   EXPO_PUBLIC_SUPABASE_ANON_KEY=sb_publishable_<your-publishable-key>
+   ```
+
+> ⚠️ **Important**: Never commit `.env` or service-role keys to git. The `.env` file is strictly ignored by `.gitignore`.
+
+---
+
+## 💻 Running the Project Locally
+
+Zeona supports Web, Android, and iOS development targets:
+
+### 1. Run on Web (Browser)
+Fastest way to test screens and logic without any emulators:
 ```bash
 npm run web
 ```
@@ -144,109 +118,112 @@ npx expo start --web
 ```
 Open **[http://localhost:8081](http://localhost:8081)** in your browser.
 
-#### Option B: Run on Android (Emulator or Phone)
+---
+
+### 2. Run on Android Device / Emulator
+To run on a connected Android phone or Android Studio emulator:
 ```bash
 npm run android
 ```
-or launch the interactive Metro bundler:
+or start the interactive Metro bundler:
 ```bash
 npx expo start
 ```
-- Press <kbd>a</kbd> to launch the Android emulator.
-- Press <kbd>r</kbd> to reload the application.
-- Press <kbd>c</kbd> to clear bundler cache (`npx expo start -c`).
-
-#### Option C: Run on iOS Simulator (macOS only)
-```bash
-npm run ios
-```
+- Press <kbd>a</kbd> in the terminal to open the Android emulator.
+- Press <kbd>r</kbd> to reload the app.
+- Press <kbd>c</kbd> to clear bundler cache if needed (`npx expo start -c`).
 
 ---
 
-## 🧪 Testing & Quality Verification
+### 3. Run on iOS Simulator (macOS only)
+```bash
+npm run ios
+```
+- Press <kbd>i</kbd> in the terminal to launch the iOS simulator.
 
-Run these validation checks prior to committing changes:
+---
+
+## 🧪 Code Quality & Verification
+
+Run these commands before committing code or initiating a production build:
 
 ```bash
-# 1. TypeScript compilation check
+# 1. Run TypeScript typecheck across all screens and components
 npm run typecheck
 
-# 2. ESLint verification
+# 2. Run ESLint checks
 npm run lint
 
-# 3. Validate public Expo app configuration
+# 3. Validate public Expo configuration
 npx expo config --type public
 ```
 
 ---
 
-## 📦 Building the Standalone Android APK (EAS)
+## 📦 Building Standalone Android APK (EAS)
 
-Zeona is configured with **EAS Build** to generate direct, installable `.apk` packages for Android (no Expo Go required):
+Zeona is pre-configured with Expo Application Services (EAS) to build standalone `.apk` packages that install directly on Android phones (no Expo Go required):
 
-### 1. Log in to EAS
+### 1. Authenticate with EAS
 ```bash
 npx eas login
 ```
 
-### 2. Build Internal Preview APK
+### 2. Build Internal/Preview APK
 ```bash
 npx eas build --platform android --profile preview
 ```
 
-### 3. Install on Android Devices
-1. When the build completes, download the generated `.apk` file from the Expo link or scan the terminal QR code.
-2. Transfer or open the `.apk` on your phone.
-3. Tap **Install** (allow "Install Unknown Apps" from your browser/files if prompted).
-4. Launch Zeona directly from your home screen.
+### 3. Install on Phone
+1. Once the EAS build completes, download the generated `.apk` from the provided URL or scan the QR code.
+2. Open the file on your Android device and tap **Install**.
+3. If prompted, toggle "Allow from this source" in Android settings.
 
 ---
 
-## 🔒 Security & Data Isolation
-
-* **Row-Level Security (RLS)**: Every database table in Supabase is governed by strict RLS policies. Queries are authenticated against `auth.uid() = user_id`, guaranteeing users can only read and write their own data.
-* **Storage Isolation**: User audio memos and memory photos are uploaded to private bucket subdirectories keyed by user ID (`<user_id>/...`).
-* **Client-Side RFC-4122 v4 UUIDs**: Primary keys are created using deterministic client-side UUID generation (`utils/uuid.ts`), allowing offline creation without primary key collisions upon sync.
-
----
-
-## 📂 Project Directory Structure
+## 📂 Project Architecture
 
 ```
 zeona-app/
-├── app/                        # Expo Router navigation screens
-│   ├── (auth)/                 # Auth routes (login, register, reset-password)
-│   ├── (tabs)/                 # Main 5-tab dashboard navigator
-│   │   ├── index.tsx           # Home Sanctuary screen
-│   │   ├── journal.tsx         # Journal feed & reflections
-│   │   ├── create.tsx          # Quick creation sheet
-│   │   ├── calendar.tsx        # Unified calendar & milestones
-│   │   └── profile.tsx         # Profile, stats, and badges
-│   ├── journal/                # Voice recorder, detail view, editor
+├── app/                        # Expo Router file-based navigation
+│   ├── (auth)/                 # Authentication screens (login, register, reset-password)
+│   ├── (tabs)/                 # Main tab navigator
+│   │   ├── index.tsx           # Home Sanctuary dashboard
+│   │   ├── journal.tsx         # Journal & reflection feed
+│   │   ├── create.tsx          # Mindful quick creation hub
+│   │   ├── calendar.tsx        # Calendar & milestones
+│   │   └── profile.tsx         # User profile & stats
+│   ├── journal/                # Voice recorder, detail, and rich editor
 │   ├── tasks/                  # Mindful task management
 │   ├── habits/                 # Habit tracker and streak calendar
 │   ├── mood/                   # Mood check-in and insights
-│   ├── memories/               # Memory photo gallery and editor
-│   ├── reminders/              # Notification scheduler
-│   ├── settings/               # App preferences and privacy
-│   └── _layout.tsx             # Root layout, fonts & splash management
-├── assets/                     # Media & design assets
-│   └── images/                 # App icons, splash screen, favicon
-├── components/                 # Design system components
+│   ├── memories/               # Photo gallery and memories editor
+│   ├── reminders/              # Notification reminders
+│   ├── settings/               # App appearance & privacy settings
+│   └── _layout.tsx             # Root layout, font loader & splash screen
+├── assets/                     # Images, brand icons, and typography
+│   └── images/                 # Adaptive launcher icons, splash, favicon
+├── components/                 # Reusable UI system
 │   ├── ui/                     # ZText, ZCard, ZButton, ZBadge, ZInput, etc.
 │   └── audio/                  # AudioPlayer, AudioWaveform
 ├── hooks/                      # Custom hooks (useFonts, useTheme, useVoiceRecorder)
 ├── services/                   # Supabase client, audioStorage, photoStorage, dataAccess
-├── store/                      # Zustand state stores (auth, mood, journal, habits, etc.)
-├── supabase/                   # Database schemas, migrations, and RLS rules
+├── store/                      # Zustand state management (auth, mood, journal, habits, etc.)
+├── supabase/                   # Migration SQL files, schemas, and RLS policies
 ├── utils/                      # Client UUID generator, habit calculations, haptics
-├── app.json                    # Expo configuration
-├── eas.json                    # EAS build configuration
-└── package.json                # Project dependencies and run scripts
+├── app.json                    # Expo configuration (icons, permissions, plugins)
+└── eas.json                    # EAS build profiles (preview APK, production)
 ```
 
 ---
 
+## 🔒 Security & Data Privacy
+
+- **Row-Level Security (RLS)**: Every database table in Supabase enforces strict user ownership (`auth.uid() = user_id`). Users can never query or manipulate data from other accounts.
+- **Storage Isolation**: Audio recordings and memory photos are partitioned into authenticated folders (`<user_id>/...`).
+- **Client-Side UUIDs**: All primary keys are generated on the client via RFC-4122 v4 UUIDs, allowing robust optimistic updates and offline resilience.
+
+---
+
 ## 📄 License
-This project is licensed under the [MIT License](LICENSE).
-```
+This project is licensed under the MIT License.
