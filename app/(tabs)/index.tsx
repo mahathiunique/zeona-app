@@ -82,7 +82,7 @@ export default function HomeScreen() {
   const userDisplayName =
     user?.user_metadata?.display_name ||
     user?.user_metadata?.full_name ||
-    (user?.email ? user.email.split('@')[0] : isGuest ? 'Traveler' : 'Mahathi');
+    (user?.email ? user.email.split('@')[0] : isGuest ? 'Traveler' : 'Sanctuary Keeper');
 
   const formattedDate = now.toLocaleDateString('en-US', {
     weekday: 'long',

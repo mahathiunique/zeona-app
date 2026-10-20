@@ -10,10 +10,10 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { supabase } from '@/services/supabase';
 import { useAuthStore } from '@/store/authStore';
 import { useHabitStore } from '@/store/habitStore';
+import { generateUUID } from '@/utils/uuid';
 import type { Task, TaskPriority, TaskCategory, Habit, CalendarEvent, CalendarEventType } from '@/types';
 
 const TASKS_STORAGE_KEY = 'zeona_tasks_v1';
-const HABITS_STORAGE_KEY = 'zeona_habits_v1';
 const GUEST_EVENTS_STORAGE_KEY = 'zeona_guest_events_v1';
 
 export const TASK_CATEGORY_CONFIG: Record<
@@ -399,7 +399,7 @@ export const useCalendarStore = create<CalendarState>((set, get) => ({
     const storageKey = user ? `zeona_tasks_${user.id}` : TASKS_STORAGE_KEY;
 
     const newTask: Task = {
-      id: `task-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
+      id: generateUUID(),
       user_id: user?.id || 'local-user',
       title: taskData.title?.trim() || 'Untitled task',
       description: taskData.description?.trim() || null,
@@ -551,7 +551,7 @@ export const useCalendarStore = create<CalendarState>((set, get) => ({
     const config = EVENT_CATEGORY_CONFIG[type];
 
     const newEvent: CalendarEvent = {
-      id: `evt-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
+      id: generateUUID(),
       user_id: userId,
       title: eventData.title.trim(),
       description: eventData.description?.trim() || null,

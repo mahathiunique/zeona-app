@@ -7,7 +7,7 @@
  * without time zone drift or guilt-inducing messages.
  */
 
-import type { Habit, HabitFrequency } from '@/types';
+import type { Habit } from '@/types';
 
 /**
  * Returns YYYY-MM-DD from a local Date object.

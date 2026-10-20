@@ -405,7 +405,12 @@ export const useMoodStore = create<MoodStoreState>((set, get) => ({
 
       if (supabase && user) {
         try {
-          await supabase.from('mood_entries').update(targetEntry).eq('id', targetEntry.id);
+          const { id: entryId, ...supabasePayload } = targetEntry;
+          if (/^\d+$/.test(String(entryId))) {
+            await supabase.from('mood_entries').update(supabasePayload).eq('id', entryId).eq('user_id', user.id);
+          } else {
+            await supabase.from('mood_entries').update(supabasePayload).eq('user_id', user.id).eq('logged_date', targetEntry.logged_date);
+          }
         } catch (err) {
           console.warn('[Zeona Mood] Supabase update notice:', err);
         }
@@ -425,7 +430,16 @@ export const useMoodStore = create<MoodStoreState>((set, get) => ({
 
       if (supabase && user) {
         try {
-          await supabase.from('mood_entries').insert([targetEntry]);
+          const { id: _, ...supabasePayload } = targetEntry;
+          const { data: inserted, error: insertError } = await supabase
+            .from('mood_entries')
+            .insert([{ ...supabasePayload, user_id: user.id }])
+            .select()
+            .single();
+
+          if (!insertError && inserted?.id) {
+            targetEntry.id = String(inserted.id);
+          }
         } catch (err) {
           console.warn('[Zeona Mood] Supabase insert notice:', err);
         }

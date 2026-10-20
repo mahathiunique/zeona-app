@@ -267,24 +267,31 @@ export const useSettingsStore = create<SettingsStoreState>((set, get) => ({
         }
 
         // C. Delete all database table records scoped to user
-        const tables = [
+        const userScopedTables = [
           'memories',
+          'voice_recordings',
           'journal_entries',
           'tasks',
-          'events',
-          'habit_logs',
+          'calendar_events',
+          'habit_completions',
           'habits',
           'mood_entries',
           'reminders',
-          'profiles',
         ];
 
-        for (const table of tables) {
+        for (const table of userScopedTables) {
           try {
             await supabase.from(table).delete().eq('user_id', userId);
           } catch (tblErr) {
             console.warn(`[Zeona Settings] Table delete notice (${table}):`, tblErr);
           }
+        }
+
+        // D. Delete profile record (scoped by id = userId)
+        try {
+          await supabase.from('profiles').delete().eq('id', userId);
+        } catch (profErr) {
+          console.warn('[Zeona Settings] Profile delete notice:', profErr);
         }
       }
 
